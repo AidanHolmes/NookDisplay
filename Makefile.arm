@@ -1,0 +1,21 @@
+CXXFLAGS=-Wall -I../../hardware/ -I../../graphics/libjpeg-turbo-1.3.0/ -I../../graphics/
+LIBS = -L../../graphics/.libs/ -ljpeg
+LDFLAGS = 
+
+SRCS_LIB = ../../hardware/displayimage.cpp testapp.cpp testwindow.cpp nookapp.cpp nookwindow.cpp
+H_LIB = $(SRCS_LIB:.cpp=.hpp)
+OBJS_LIB = $(SRCS_LIB:.cpp=.o)
+
+EXECUTABLE = nookwnd
+
+.PHONY: all
+all: $(EXECUTABLE)
+
+$(EXECUTABLE): $(OBJS_LIB)
+	$(CXX) $(LDFLAGS) $(OBJS_LIB) $(OBJS_OLED) $(LIBS) -o $@
+
+$(OBJS_LIB): $(H_LIB)
+
+.PHONY: clean
+clean:
+	rm -f *.o $(EXECUTABLE)
