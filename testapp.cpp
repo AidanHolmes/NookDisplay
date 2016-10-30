@@ -15,6 +15,11 @@ bool TestNookApp::run()
     return false ;
   }
 
+  if (!init_inputs("/dev/input")){
+    std::cerr << "Failed to initialise the input events\n" ;
+    return false ;
+  }
+
   TestNookWnd wnd ;
   std::cout << "Creating window, width: " << m_fbw << ", height: " << m_fbh << std::endl ;
   if (!wnd.create(0,0,m_fbw, m_fbh)){
@@ -25,17 +30,8 @@ bool TestNookApp::run()
   register_window(wnd) ;
 
   while(1){
-    
-    NookWindow::state s = get_active_window()->get_state() ;
-    bool bFull = s == NookWindow::verydirty ;
-    if (s != NookWindow::clean){
-      get_active_window()->redraw();
-      std::cout << "write_to_nook(get_active_window()->canvas)\n" ;
-      write_to_nook(get_active_window()->canvas, bFull);
-    }
-    
+    dispatch_app_events() ;
     nanosleep(&tenthsec,NULL) ;
-    get_active_window()->tick() ;
   }
 }
 
