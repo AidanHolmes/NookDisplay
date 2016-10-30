@@ -15,7 +15,6 @@ bool TestNookWnd::draw()
   canvas.setFGCol(0,0,0,0);
   canvas.setBGCol(255,255,255,255) ;
   canvas.eraseBackground();
-  std::cout << "Drawing to window, width: " << m_width << ", height: " << m_height << std::endl ;
   if (!canvas.drawLine(m_width/2,m_height/2, m_x, m_y))
     std::cerr << "Failed to draw line onto canvas\n" ;
 
@@ -25,6 +24,12 @@ bool TestNookWnd::draw()
   return true ;
 }
 
+void TestNookWnd::key_event(KeyEvent &keys)
+{
+  std::string strState = "up";
+  if (keys.key_down) strState = "down" ;
+  std::cout << "Key " << strState << ", ID: " << (int)keys.code << std::endl;
+}
 
 bool TestNookWnd::tick()
 {

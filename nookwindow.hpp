@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "displayimage.hpp"
+#include "nookinput.hpp"
 
 class NookWindow{
 public:
@@ -41,6 +42,8 @@ public:
 
   state get_state() ;
   void invalidate_window(bool bFull = false);
+
+  virtual void key_event(KeyEvent &keys) ;
 
   // Access is required to this object externally. This won't mess around with
   // friend classes to make access work.

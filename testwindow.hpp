@@ -2,13 +2,15 @@
 #define __TESTNOOKWND_HPP
 
 #include "nookwindow.hpp"
+#include "nookinput.hpp"
 #include <time.h>
 
 class TestNookWnd: public NookWindow{
 public:
   TestNookWnd() ;
-  bool draw() ;
-  bool tick() ;
+  virtual bool draw() ;
+  virtual bool tick() ;
+  virtual void key_event(KeyEvent &keys) ;
 
 private:
   unsigned int m_x ;

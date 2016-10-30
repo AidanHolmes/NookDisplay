@@ -18,15 +18,19 @@ public:
   NookWindow *get_active_window();
 
   // Input functions
-  //void register_input(int eventid) ;
+  enum input{touchscreen, key, gpio} ;
+  bool init_inputs(std::string strEventBase);
+  // setup an input event for use by the application
 
+  // Dispatch drawing and input events to active window
+  // Should be called from run()
+  void dispatch_app_events();
 
   // Display functions
   bool init_display(std::string strFrameBuffer, std::string strrefresh) ; 
   bool write_to_nook(DisplayImage &img, bool bFull = false) ;
   
   // Start the application. Function returns when app closes
-
   // This needs implementing by an application object derived from this
   // class
   virtual bool run() = 0 ;
@@ -44,6 +48,9 @@ protected:
   uint16_t* m_imgout ;
   int m_fb_page ;
   unsigned int m_fbw, m_fbh ;
+
+  NookKeys m_inputkeys ;
+  bool m_binputkeys_enabled ;
 };
 
 #endif

@@ -11,6 +11,7 @@
 #include <time.h>
 #include <errno.h>
 #include <string.h>
+#include "nookinput.hpp"
 
 using namespace std;
 
@@ -22,13 +23,45 @@ NookApp::NookApp()
   m_fb_page = 1;
   m_imgout = NULL ;
   m_fbw = m_fbh = 0 ;
+  m_binputkeys_enabled = false;
 }
 
 NookApp::~NookApp()
 {
   if (m_imgout) delete[] m_imgout ;
+  m_imgout = NULL ;
   // delete the memory mapped frame buffer
-  // To do!
+  if (m_framebuffer){
+    munmap(m_framebuffer, m_fi.smem_len);
+    close(m_iofb) ;
+    m_framebuffer = NULL ;
+    m_iofb = -1;
+  }
+}
+
+bool NookApp::init_inputs(string strEventBase)
+{
+  bool bRet = false ;
+  bRet = m_inputkeys.create(strEventBase.c_str(), 0) ;
+  if (bRet) m_binputkeys_enabled = true ;
+  return bRet ;
+}
+
+void NookApp::dispatch_app_events()
+{
+  NookWindow::state s = get_active_window()->get_state() ;
+  bool bFull = s == NookWindow::verydirty ;
+  if (s != NookWindow::clean){
+    get_active_window()->redraw();
+    write_to_nook(get_active_window()->canvas, bFull);
+  }
+  if (m_binputkeys_enabled){
+    KeyEvent key = m_inputkeys.get_next_key() ;
+    if (key.valid){
+      get_active_window()->key_event(key);
+    }
+  }
+  get_active_window()->tick() ;
 }
 
 bool NookApp::init_display(string strfb, string strrefresh)

@@ -66,3 +66,11 @@ void NookWindow::redraw()
     cout << "Draw returned false for window\n" ;
   }
 }
+
+void NookWindow::key_event(KeyEvent &keys)
+{
+  // Dispatch key stroke to all child windows
+  for (vector<NookWindow>::iterator i=m_children.begin(); i != m_children.end(); i++){
+    i->key_event(keys) ;
+  }
+}
