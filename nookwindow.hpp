@@ -8,13 +8,28 @@
 class NookWindow{
 public:
   NookWindow();
-  enum state{clean,dirty,verydirty} ;
+  enum state{clean,dirty,verydirty} ; // Window states
 
   // Create the screen for the window
   bool create(unsigned int x, unsigned int y, unsigned int width, unsigned int height) ;
 
   // Add window as a child window
   void add_window(NookWindow &wnd) ;
+
+  // Defines the offset from the parent canvas. get_* calls return the offset values
+  void set_origin(unsigned int x, unsigned int y){m_x_pos = x; m_y_pos = y;};
+  unsigned int get_x_pos(){return m_x_pos;} ;
+  unsigned int get_y_pos(){return m_y_pos;} ;
+
+  // Check status of window with is_hidden call. Hide a window with hide(true/false)
+  bool is_hidden(){return m_bHidden;};
+  void hide(bool bHide){m_bHidden = bHide;} ;
+
+  // Return state of window which is defined in the enum in this header
+  state get_state() ;
+  // Set the state to dirty or verydirty if bFull is true. 
+  // dirty and verydirty will trigger a refresh. verydirty causes a full screen refresh
+  void invalidate_window(bool bFull = false);
 
   // Virtual. Called to send a redraw request to all windows
   virtual void redraw();
@@ -25,6 +40,10 @@ public:
   // Virtual. Tick the window. This doesn't dictate the amount of time passed
   virtual bool tick(){return true;};
 
+  // Virtual call for windows to create any additional setup when created. Called from
+  // create after graphics canvas has been created. 
+  virtual void initialise(){};
+
   // Activate function to do any initialisation on the window if activated
   // Optional to implement. Base function does nothing
   virtual bool activate(){return true;};
@@ -33,16 +52,7 @@ public:
   // Optional, does nothing if baseclass is used
   virtual bool deactivate(){return true;};
 
-  void set_origin(unsigned int x, unsigned int y){m_x_pos = x; m_y_pos = y;};
-  unsigned int get_x_pos(){return m_x_pos;} ;
-  unsigned int get_y_pos(){return m_y_pos;} ;
-
-  bool is_hidden(){return m_bHidden;};
-  void hide(bool bHide){m_bHidden = bHide;} ;
-
-  state get_state() ;
-  void invalidate_window(bool bFull = false);
-
+  // Called for key presses for the 4 buttons on sides of Nook
   virtual void key_event(KeyEvent &keys) ;
 
   // Access is required to this object externally. This won't mess around with
@@ -51,7 +61,7 @@ public:
   
 
 protected:
-  std::vector<NookWindow> m_children ;
+  std::vector<NookWindow*> m_children ;
   bool m_bHidden ;
   state m_enState ;
   unsigned int m_x_pos, m_y_pos ;

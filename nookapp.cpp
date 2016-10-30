@@ -55,6 +55,7 @@ void NookApp::dispatch_app_events()
     get_active_window()->redraw();
     write_to_nook(get_active_window()->canvas, bFull);
   }
+
   if (m_binputkeys_enabled){
     KeyEvent key = m_inputkeys.get_next_key() ;
     if (key.valid){
@@ -142,11 +143,12 @@ bool NookApp::write_to_nook(DisplayImage &img, bool bFull)
 
 void NookApp::register_window(NookWindow &wnd)
 {
-  m_windows.push_back(wnd) ;
+  m_windows.push_back(&wnd) ;
 
   // Set the first window as active. This will remain the primary window
   // until changed with an alternative activate_window* call
-  if (!m_pactivewindow) m_pactivewindow = &wnd ;
+  if (!m_pactivewindow) activate_window_next();
+  //if (!m_pactivewindow) m_pactivewindow = &wnd ;
 }
 
 NookWindow* NookApp::get_active_window()
@@ -156,35 +158,40 @@ NookWindow* NookApp::get_active_window()
 
 bool NookApp::activate_window_next()
 {
-  NookWindow wnd ;
   // Check if we have windows to activate. Will fail if there are no
   // windows
   if (m_windows.size() == 0) return false;
 
-  if (!m_pactivewindow || m_pactivewindow == &(m_windows.back())){
+  if (!m_pactivewindow || m_pactivewindow == m_windows.back()){
+    if (m_pactivewindow){
+      m_pactivewindow->deactivate() ; // ensure the window losing focus receives the deactivate
+    }
     // pactivewindow is not set or the active window is the last item in the 
     // vector list
-    wnd = m_windows.front();
-    m_pactivewindow = &wnd ;
+    m_pactivewindow = m_windows.front() ;
+    m_pactivewindow->activate() ; // ensure the window gaining focus is activated
     return true ;
   }
 
-  for (vector<NookWindow>::iterator i=m_windows.begin(); i != m_windows.end(); i++){
-    wnd = *i ;
-    if (m_pactivewindow == &wnd){
-      m_pactivewindow = &(*(i+1)) ; // Store the object pointer.
+  for (vector<NookWindow*>::iterator i=m_windows.begin(); i != m_windows.end(); i++){
+    if (m_pactivewindow == *i){
+      m_pactivewindow->deactivate() ; // ensure the window losing focus receives the deactivate
+      m_pactivewindow = *(i+1) ; // Store the object pointer.
+      m_pactivewindow->activate() ; // ensure the window gaining focus is activated
       return true ;
     }
   }
 
   // If here then the active window was not found. Cannot active the next
-  m_pactivewindow = &(m_windows.front()) ;
+  m_pactivewindow = m_windows.front() ;
+  m_pactivewindow->activate() ; // ensure the window gaining focus is activated
+
   return true ;
 }
 
 bool NookApp::activate_window(string strName)
 {
-  // To do
+  // To do. Ensure activate & deactivate are correctly called
 
   return true ;
 }

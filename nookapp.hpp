@@ -38,7 +38,7 @@ public:
 private:
 
 protected:
-  std::vector<NookWindow> m_windows; 
+  std::vector<NookWindow*> m_windows; 
   std::string m_fileRefresh ;
   NookWindow *m_pactivewindow ;
   struct fb_var_screeninfo m_vi;

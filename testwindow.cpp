@@ -2,6 +2,12 @@
 #include <iostream>
 #include <time.h>
 
+bool WeatherIcon::draw()
+{
+  std::cout << "Weather Icon drawing\n" ;
+  return canvas.loadJPG("weather.jpg");
+}
+
 TestNookWnd::TestNookWnd()
 {
   NookWindow() ;
@@ -10,6 +16,13 @@ TestNookWnd::TestNookWnd()
   m_last = 0 ;
   m_full = 0 ;
 }
+
+void TestNookWnd::initialise()
+{
+  iconwnd.create(50,50,256,256) ;
+  add_window(iconwnd) ;
+}
+
 bool TestNookWnd::draw()
 {
   canvas.setFGCol(0,0,0,0);

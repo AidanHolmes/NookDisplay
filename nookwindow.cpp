@@ -13,17 +13,22 @@ NookWindow::NookWindow()
 
 bool NookWindow::create(unsigned int x, unsigned int y, unsigned int width, unsigned int height)
 {
+  bool ret = false;
+
   m_x_pos = x;
   m_y_pos = y;
   m_width = width ;
   m_height = height;
-  return canvas.createImage(width, height, 32) ;
+  ret = canvas.createImage(width, height, 32) ;
+  if (!ret) return false ;
+  initialise() ; // Call the windows initialisation to finish any setup
+  return true ;
 }
 
 void NookWindow::add_window(NookWindow &wnd)
 {
   // Move to back of window stack
-  m_children.push_back(wnd) ;
+  m_children.push_back(&wnd) ;
 }
 
 NookWindow::state NookWindow::get_state()
@@ -32,9 +37,9 @@ NookWindow::state NookWindow::get_state()
 
   if (m_enState == verydirty) return m_enState ; // Quick response if verydirty
 
-  for (vector<NookWindow>::iterator i=m_children.begin(); i != m_children.end(); i++){
-    if (!i->is_hidden()){
-      state s = i->get_state() ;
+  for (vector<NookWindow*>::iterator i=m_children.begin(); i != m_children.end(); i++){
+    if (!(*i)->is_hidden()){
+      state s = (*i)->get_state() ;
       if (s == verydirty) return s ; // Don't look further, found verydirty
       if (s == dirty) st = dirty ;
     }
@@ -52,12 +57,11 @@ void NookWindow::invalidate_window(bool bFull)
 void NookWindow::redraw()
 {
   if (draw()){ // parent draws before child
-    for (vector<NookWindow>::iterator i=m_children.begin(); i != m_children.end(); i++){
-      cout << "Iterating through child windows\n" ;
-      if (!i->is_hidden()){ // if child is hidden, skip drawing calls. 
-	i->redraw() ;
+    for (vector<NookWindow*>::iterator i=m_children.begin(); i != m_children.end(); i++){
+      if (!(*i)->is_hidden()){ // if child is hidden, skip drawing calls. 
+	(*i)->redraw() ;
 	// Call function in DisplayImage to copy and merge the canvas from children.
-	if (!canvas.copy(i->canvas, 0, i->m_x_pos, i->m_y_pos)) 
+	if (!canvas.copy((*i)->canvas, 0, (*i)->m_x_pos, (*i)->m_y_pos)) 
 	  cerr << "Canvas copy failed for window\n" ;
       }
     }
@@ -70,7 +74,7 @@ void NookWindow::redraw()
 void NookWindow::key_event(KeyEvent &keys)
 {
   // Dispatch key stroke to all child windows
-  for (vector<NookWindow>::iterator i=m_children.begin(); i != m_children.end(); i++){
-    i->key_event(keys) ;
+  for (vector<NookWindow*>::iterator i=m_children.begin(); i != m_children.end(); i++){
+    (*i)->key_event(keys) ;
   }
 }
