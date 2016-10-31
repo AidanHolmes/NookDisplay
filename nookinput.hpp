@@ -9,9 +9,9 @@
 class Event{
 public:
   bool valid ;
-  char type ;
-  char code ;
-  char value ;
+  unsigned int type ;
+  unsigned int code ;
+  long value ;
 };
 
 class NookInput{
@@ -25,8 +25,7 @@ public:
 
   unsigned int queue_len() ;
   Event& get_next() ;
-
-  Event m_evtCache ;
+  std::string get_name(){return m_name ;};
 
 protected:
   // true if event can be read, otherwise false
@@ -38,6 +37,7 @@ protected:
   std::string m_name ;
 
 private:
+  Event m_evtCache ;
 
 };
 
@@ -50,12 +50,26 @@ class NookKeys : public NookInput{
 public:
   NookKeys() ;
   KeyEvent& get_next_key() ;
-  KeyEvent m_evtCache ;
-protected:
-
 private:
-
+  KeyEvent m_evtCache ;
 };
 
+class TouchEvent : public Event{
+public:
+  bool touch_down;
+  long x;
+  long y;
+} ;
+
+class NookTouch : public NookInput{
+public:
+  NookTouch() ;
+  TouchEvent& get_next_touch() ;
+protected:
+  bool m_got_x ;
+  bool m_got_y ;
+private:
+  TouchEvent m_evtCache ;
+};
 
 #endif

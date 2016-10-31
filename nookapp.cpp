@@ -24,6 +24,8 @@ NookApp::NookApp()
   m_imgout = NULL ;
   m_fbw = m_fbh = 0 ;
   m_binputkeys_enabled = false;
+  m_binputgpio_enabled = false;
+  m_binputtouch_enabled = false;
 }
 
 NookApp::~NookApp()
@@ -44,6 +46,13 @@ bool NookApp::init_inputs(string strEventBase)
   bool bRet = false ;
   bRet = m_inputkeys.create(strEventBase.c_str(), 0) ;
   if (bRet) m_binputkeys_enabled = true ;
+
+  bRet = m_inputgpio.create(strEventBase.c_str(), 1) ;
+  if (bRet) m_binputgpio_enabled = true ;
+
+  bRet = m_inputtouch.create(strEventBase.c_str(), 2) ;
+  if (bRet) m_binputtouch_enabled = true ;
+
   return bRet ;
 }
 
@@ -56,12 +65,30 @@ void NookApp::dispatch_app_events()
     write_to_nook(get_active_window()->canvas, bFull);
   }
 
+  // Process keys
   if (m_binputkeys_enabled){
     KeyEvent key = m_inputkeys.get_next_key() ;
     if (key.valid){
       get_active_window()->key_event(key);
     }
   }
+
+  // Process gpio keys
+  if (m_binputgpio_enabled){
+    KeyEvent gkey = m_inputgpio.get_next_key() ;
+    if (gkey.valid){
+      get_active_window()->key_event(gkey);
+    }
+  }
+
+  // Process touch screen
+  if (m_binputtouch_enabled){
+    TouchEvent touch = m_inputtouch.get_next_touch() ;
+    if (touch.valid){
+      get_active_window()->touch_event(touch);
+    }
+  }
+
   get_active_window()->tick() ;
 }
 

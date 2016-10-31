@@ -90,6 +90,7 @@ NookKeys::NookKeys()
   NookInput();
   m_evtCache.key_down = false ;
 }
+
 KeyEvent& NookKeys::get_next_key()
 {
   m_evtCache.valid = false ;
@@ -102,7 +103,73 @@ KeyEvent& NookKeys::get_next_key()
       m_evtCache.code = m_event.code ;
       m_evtCache.value = m_event.value ;
       m_evtCache.key_down = (m_event.value==1)?true:false ;
+      return m_evtCache ;
     }
+  }
+  return m_evtCache ;
+}
+
+//////////////////////////////////////////////
+//
+// NookTouch
+//
+//
+
+NookTouch::NookTouch()
+{
+  NookInput() ;
+  m_evtCache.touch_down = false ;
+  m_evtCache.x = 0;
+  m_evtCache.y = 0;
+
+  m_got_x = false ;
+  m_got_y = false ;
+}
+
+TouchEvent& NookTouch::get_next_touch()
+{
+  m_evtCache.valid = false ;
+  bool btmp = false ;
+
+  while (read_next_event()){
+    // Not really relevent for this event
+    // but they are set anyway
+    m_evtCache.type = m_event.type ;
+    m_evtCache.code = m_event.code ;
+    m_evtCache.value = m_event.value ;
+
+    // Keys and absolute values returned from z-force
+    switch(m_event.type){
+    case EV_KEY:
+      // The only code is 330 for z-force touch
+      // Return the key. The X & Y may relate to the key touch as the 
+      // key code seems to follow the coordinates
+      btmp = (m_event.value==1)?true:false;
+      if (m_evtCache.touch_down != btmp){
+	m_evtCache.touch_down = btmp;
+	m_evtCache.valid = true ;
+	return m_evtCache ;
+      }
+      break ;
+    case EV_ABS:
+      if (m_event.code == ABS_X){
+	m_evtCache.x = m_event.value;
+	m_got_x = true ;
+      }else if (m_event.code == ABS_Y){
+	m_evtCache.y = m_event.value ;
+	m_got_y = true ;
+      }
+      break ;
+    default:
+      // Do nothing and check for more events
+      break;
+    };
+    if (m_got_x && m_got_y){
+      m_got_x = m_got_y = false ;
+      m_evtCache.valid = true ;
+      return m_evtCache;
+    }
+    
   }
   return m_evtCache ;
 }

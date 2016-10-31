@@ -78,3 +78,11 @@ void NookWindow::key_event(KeyEvent &keys)
     (*i)->key_event(keys) ;
   }
 }
+
+void NookWindow::touch_event(TouchEvent &touch)
+{
+  // Dispatch touch events to all child windows
+  for (vector<NookWindow*>::iterator i=m_children.begin(); i != m_children.end(); i++){
+    (*i)->touch_event(touch) ;
+  }
+}

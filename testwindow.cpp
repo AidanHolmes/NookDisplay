@@ -44,6 +44,15 @@ void TestNookWnd::key_event(KeyEvent &keys)
   std::cout << "Key " << strState << ", ID: " << (int)keys.code << std::endl;
 }
 
+void TestNookWnd::touch_event(TouchEvent &touch)
+{
+  std::string strState = "up";
+  if (touch.touch_down) strState = "down" ;
+  std::cout << "Touch X:" << touch.x << " Y: " << touch.y << " state: " << strState << std::endl;
+
+  iconwnd.set_origin(touch.x, touch.y) ;
+}
+
 bool TestNookWnd::tick()
 {
   time_t now = time(NULL) ;

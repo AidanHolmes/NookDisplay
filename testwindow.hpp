@@ -16,6 +16,7 @@ public:
   virtual bool draw() ;
   virtual bool tick() ;
   virtual void key_event(KeyEvent &keys) ;
+  virtual void touch_event(TouchEvent &touch) ;
   virtual void initialise() ;
 
 private:

@@ -51,6 +51,12 @@ protected:
 
   NookKeys m_inputkeys ;
   bool m_binputkeys_enabled ;
+
+  NookKeys m_inputgpio;
+  bool m_binputgpio_enabled ;
+
+  NookTouch m_inputtouch;
+  bool m_binputtouch_enabled ;
 };
 
 #endif

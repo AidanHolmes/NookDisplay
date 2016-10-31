@@ -52,8 +52,12 @@ public:
   // Optional, does nothing if baseclass is used
   virtual bool deactivate(){return true;};
 
-  // Called for key presses for the 4 buttons on sides of Nook
+  // Called for key presses for the 4 buttons on sides of Nook or through
+  // the GPIO home and power keys
   virtual void key_event(KeyEvent &keys) ;
+
+  // Called for touchscreen events
+  virtual void touch_event(TouchEvent &touch) ;
 
   // Access is required to this object externally. This won't mess around with
   // friend classes to make access work.
