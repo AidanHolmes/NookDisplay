@@ -19,7 +19,7 @@ bool NookWindow::create(unsigned int x, unsigned int y, unsigned int width, unsi
   m_y_pos = y;
   m_width = width ;
   m_height = height;
-  ret = canvas.createImage(width, height, 32) ;
+  ret = canvas.createImage(width, height, 8) ;
   if (!ret) return false ;
   initialise() ; // Call the windows initialisation to finish any setup
   return true ;

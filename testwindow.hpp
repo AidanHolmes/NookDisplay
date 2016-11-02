@@ -8,6 +8,7 @@
 class WeatherIcon: public NookWindow{
 public:
   virtual bool draw() ;
+  virtual void initialise() ;
 };
 
 class TestNookWnd: public NookWindow{

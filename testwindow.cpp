@@ -4,8 +4,13 @@
 
 bool WeatherIcon::draw()
 {
-  std::cout << "Weather Icon drawing\n" ;
-  return canvas.loadJPG("weather.jpg");
+  return true ;
+}
+
+void WeatherIcon::initialise()
+{
+  std::cout << "Initialising Weather Icon\n" ;
+  canvas.loadJPG("weather.jpg",8) ;
 }
 
 TestNookWnd::TestNookWnd()
@@ -25,8 +30,10 @@ void TestNookWnd::initialise()
 
 bool TestNookWnd::draw()
 {
-  canvas.setFGCol(0,0,0,0);
-  canvas.setBGCol(255,255,255,255) ;
+  //canvas.setFGCol(0,0,0,0);
+  //canvas.setBGCol(255,255,255,255) ;
+  canvas.setFGGrey(0) ;
+  canvas.setBGGrey(255) ;
   canvas.eraseBackground();
   if (!canvas.drawLine(m_width/2,m_height/2, m_x, m_y))
     std::cerr << "Failed to draw line onto canvas\n" ;

@@ -1,8 +1,8 @@
-CXXFLAGS=-Wall -I../../graphicslib/ -I../../graphics/libjpeg-turbo-1.3.0/ -I../../graphics/
-LIBS = -L../../graphics/.libs/ -ljpeg
+CXXFLAGS=-Wall -I../graphicslib/ -I../graphics/libjpeg-turbo-1.3.0/ -I../graphics/
+LIBS = -L../graphics/.libs/ -ljpeg
 LDFLAGS = 
 
-SRCS_LIB = ../../graphicslib/displayimage.cpp testapp.cpp testwindow.cpp nookapp.cpp nookwindow.cpp nookinput.cpp
+SRCS_LIB = ../graphicslib/displayimage.cpp testapp.cpp testwindow.cpp nookapp.cpp nookwindow.cpp nookinput.cpp
 H_LIB = $(SRCS_LIB:.cpp=.hpp)
 OBJS_LIB = $(SRCS_LIB:.cpp=.o)
 

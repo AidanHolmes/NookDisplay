@@ -167,6 +167,7 @@ TouchEvent& NookTouch::get_next_touch()
     if (m_got_x && m_got_y){
       m_got_x = m_got_y = false ;
       m_evtCache.valid = true ;
+      m_evtCache.touch_down = true ; // Touch must be down
       return m_evtCache;
     }
     
