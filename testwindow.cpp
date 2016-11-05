@@ -1,6 +1,7 @@
 #include "testwindow.hpp"
 #include <iostream>
 #include <time.h>
+#include "nookfont.hpp"
 
 bool WeatherIcon::draw()
 {
@@ -11,6 +12,8 @@ void WeatherIcon::initialise()
 {
   std::cout << "Initialising Weather Icon\n" ;
   canvas.loadJPG("weather.jpg",8) ;
+  //set_window_merge(true) ;
+  set_white_transparency(true) ;
 }
 
 TestNookWnd::TestNookWnd()
@@ -26,6 +29,7 @@ void TestNookWnd::initialise()
 {
   iconwnd.create(50,50,256,256) ;
   add_window(iconwnd) ;
+  m_fnt.load_font("/usr/share/fonts/ttf/LiberationSans-Regular.ttf") ;
 }
 
 bool TestNookWnd::draw()
@@ -40,6 +44,10 @@ bool TestNookWnd::draw()
 
   if (!canvas.drawRect(10,10,m_width-20, m_height-20))
     std::cerr << "Failed to draw rectangle onto canvas\n" ;
+
+  //DisplayImage fntstr = m_fnt.write_string(m_fnt.get_family_name(), 16) ;
+  DisplayImage fntstr = m_fnt.write_string("glyph justify", 16) ;
+  canvas.copy(fntstr, 2, 10, 400) ;
 
   return true ;
 }

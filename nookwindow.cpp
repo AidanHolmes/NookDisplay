@@ -9,6 +9,7 @@ NookWindow::NookWindow()
   m_bHidden = false ;
   m_enState = dirty ; // Start off dirty for every new window
   m_width = m_height = 0 ;
+  m_copy_mode = 0 ;
 }
 
 bool NookWindow::create(unsigned int x, unsigned int y, unsigned int width, unsigned int height)
@@ -61,7 +62,7 @@ void NookWindow::redraw()
       if (!(*i)->is_hidden()){ // if child is hidden, skip drawing calls. 
 	(*i)->redraw() ;
 	// Call function in DisplayImage to copy and merge the canvas from children.
-	if (!canvas.copy((*i)->canvas, 0, (*i)->m_x_pos, (*i)->m_y_pos)) 
+	if (!canvas.copy((*i)->canvas, (*i)->m_copy_mode, (*i)->m_x_pos, (*i)->m_y_pos)) 
 	  cerr << "Canvas copy failed for window\n" ;
       }
     }

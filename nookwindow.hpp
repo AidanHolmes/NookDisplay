@@ -21,6 +21,9 @@ public:
   unsigned int get_x_pos(){return m_x_pos;} ;
   unsigned int get_y_pos(){return m_y_pos;} ;
 
+  void set_window_merge(bool bSet){m_copy_mode = bSet?2:0 ;};
+  void set_white_transparency(bool bSet){m_copy_mode = bSet?4:0;};
+
   // Check status of window with is_hidden call. Hide a window with hide(true/false)
   bool is_hidden(){return m_bHidden;};
   void hide(bool bHide){m_bHidden = bHide;} ;
@@ -70,6 +73,7 @@ protected:
   state m_enState ;
   unsigned int m_x_pos, m_y_pos ;
   unsigned int m_width, m_height ;
+  int m_copy_mode ;
 
 private:
 
