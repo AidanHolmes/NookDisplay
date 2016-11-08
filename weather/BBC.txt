@@ -1,0 +1,4 @@
+RSS
+
+http://open.live.bbc.co.uk/weather/feeds/en/<locationID>/3dayforecast.rss
+Nottingham ID = 2641170
