@@ -21,6 +21,8 @@ bool WeatherApp::run()
     return false ;
   }
 
+  rotate_display(true) ;
+
   WeatherWnd wnd ;
   if (!wnd.create(0,0,m_fbw, m_fbh)){
     std::cerr << "Cannot create main window\n";

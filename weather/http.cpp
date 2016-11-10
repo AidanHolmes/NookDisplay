@@ -77,7 +77,7 @@ bool HTTPConnection::send_get(const std::string strServer, const unsigned int po
 
   //std::cout << "Sending:\n" << client_request << std::endl; 
   nres = write(sfd, client_request.c_str(), client_request.length()) ;
-  if (nres != client_request.length()){
+  if (nres != (ssize_t)client_request.length()){
     tcp_disconnect(sfd) ;
     return false ;
   }
@@ -100,7 +100,8 @@ bool HTTPConnection::send_get(const std::string strServer, const unsigned int po
   // Parse header result
   const int lenbuf = 10 ;
   bool bChunked = false ;
-  int nstate = -1, i =0;
+  int nstate = -1;
+  unsigned int i = 0;
   char szStatus[] = "000" ;
   char szLength[lenbuf] ;
   szLength[lenbuf-1] = '\0' ;

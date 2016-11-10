@@ -26,6 +26,7 @@ NookApp::NookApp()
   m_binputkeys_enabled = false;
   m_binputgpio_enabled = false;
   m_binputtouch_enabled = false;
+  m_bLandscape = false ;
 }
 
 NookApp::~NookApp()
@@ -62,7 +63,14 @@ void NookApp::dispatch_app_events()
   bool bFull = s == NookWindow::verydirty ;
   if (s != NookWindow::clean){
     get_active_window()->redraw();
-    write_to_nook(get_active_window()->canvas, bFull);
+    if (m_bLandscape){
+      // Rotate the canvas
+      DisplayImage rotated_canvas;
+      rotated_canvas.copy_rotate90_right(get_active_window()->canvas) ;
+      write_to_nook(rotated_canvas, bFull) ;
+    }else{
+      write_to_nook(get_active_window()->canvas, bFull);
+    }
   }
 
   // Process keys
@@ -92,6 +100,26 @@ void NookApp::dispatch_app_events()
   get_active_window()->tick() ;
 }
 
+void NookApp::rotate_display(bool bLandscape)
+{
+  if (m_bLandscape == bLandscape) return ; // nothing to do
+
+  m_bLandscape = bLandscape ;
+
+  if (bLandscape){
+    m_fbw = m_vi.yres ;
+    m_fbh = m_vi.xres ;
+  }else{
+    m_fbh = m_vi.yres ;
+    m_fbw = m_vi.xres ;
+  }
+
+  // Send a resize to all top-level windows
+  for (vector<NookWindow*>::iterator i=m_windows.begin(); i != m_windows.end(); i++){
+    (*i)->resize(m_fbw, m_fbh) ;
+  }
+}
+
 bool NookApp::init_display(string strfb, string strrefresh)
 {
   m_iofb = open(strfb.c_str(), O_RDWR);
@@ -117,9 +145,13 @@ bool NookApp::init_display(string strfb, string strrefresh)
     return false ;    
   }
 
-  m_fbw = m_vi.xres ;
-  m_fbh = m_vi.yres ;
-
+  if (m_bLandscape){
+    m_fbh = m_vi.xres ;
+    m_fbw = m_vi.yres ;
+  }else{
+    m_fbw = m_vi.xres ;
+    m_fbh = m_vi.yres ;
+  }    
   m_fileRefresh = strrefresh ;
 
   return true ;
@@ -164,7 +196,6 @@ bool NookApp::write_to_nook(DisplayImage &img, bool bFull)
     }
   }
 
-
   return true ;
 }
 
@@ -175,7 +206,6 @@ void NookApp::register_window(NookWindow &wnd)
   // Set the first window as active. This will remain the primary window
   // until changed with an alternative activate_window* call
   if (!m_pactivewindow) activate_window_next();
-  //if (!m_pactivewindow) m_pactivewindow = &wnd ;
 }
 
 NookWindow* NookApp::get_active_window()

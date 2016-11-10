@@ -31,7 +31,7 @@ private:
 
   WeatherIcon iconwnd ;
   NookFont m_fnt ;
-  std::string m_day1, m_day2, m_day3 ;
+  std::wstring m_day1, m_day2, m_day3 ;
 } ;
 
 

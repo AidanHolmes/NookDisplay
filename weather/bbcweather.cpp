@@ -1,6 +1,8 @@
 #include "bbcweather.hpp"
 #include <string>
 #include <iostream>
+#include <stdlib.h>
+#include <locale.h>
 
 void BBCWeather::reset()
 {
@@ -68,4 +70,29 @@ bool BBCWeather::load(std::string data)
 
   if (day != 2) return false ;
   return true ;
+}
+
+std::wstring utf8_to_wide(std::string &str)
+{
+  char *curloc = setlocale(LC_CTYPE, NULL);
+  std::wstring out ;
+
+  if (!setlocale(LC_CTYPE, "en_GB.UTF-8")){
+    std::cerr << "Cannot change locale\n" ;
+  }
+
+  size_t len = mbstowcs(NULL, str.c_str(), 0);
+  if (len < 0){
+    std::cerr << "Cannot convert multibyte to wide characters\n" ;
+    setlocale(LC_CTYPE, curloc) ; // Reset locale
+    return out ;
+  }
+
+  wchar_t *wout = new wchar_t[len+2] ;
+  mbstowcs(wout, str.c_str(), len+1) ;
+  out = wout ;
+  delete[] wout ;
+
+  setlocale(LC_CTYPE, curloc) ; // Reset locale
+  return out ;
 }

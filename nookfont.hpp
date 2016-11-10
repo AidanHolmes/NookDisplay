@@ -31,14 +31,14 @@ public:
 
   // Specify the string to create and the size in points.
   // Returns an image of the string to merge with another image. 
-  DisplayImage& write_string(std::string str, long size) ;
+  DisplayImage& write_string(std::wstring str, long size) ;
 
   // Reference to the offset after calling write_string. This can be used
   // to line up with other words on screen.
   long get_baseline_offset(){return m_baseline_offset;};
 
 protected:
-  bool get_string_size(std::string str, long *width, long *yMax, long *yMin) ;
+  bool get_string_size(std::wstring str, long *width, long *yMax, long *yMin) ;
 
 protected:
   long m_baseline_offset ;

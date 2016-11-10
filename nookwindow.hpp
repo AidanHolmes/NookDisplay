@@ -21,6 +21,14 @@ public:
   unsigned int get_x_pos(){return m_x_pos;} ;
   unsigned int get_y_pos(){return m_y_pos;} ;
 
+  // Resize the window by changing the width and height.
+  // This triggers a redraw of the target window. 
+  // This doesn't cascade to child windows and it's the responsibility
+  // of the called window to handle children.
+  // If overridden to catch the change then remember to call the parent 
+  // class to handle the resize correctly. 
+  virtual bool resize(unsigned int w, unsigned int h) ;
+
   void set_window_merge(bool bSet){m_copy_mode = bSet?2:0 ;};
   void set_white_transparency(bool bSet){m_copy_mode = bSet?4:0;};
 

@@ -72,7 +72,7 @@ bool NookFont::set_face_id(long id)
   return true ;
 }
 
-bool NookFont::get_string_size(std::string str, long *width, long *yMax, long *yMin)
+bool NookFont::get_string_size(std::wstring str, long *width, long *yMax, long *yMin)
 {
   long ret = 0 ;
   if (!m_face) return false ;
@@ -82,20 +82,27 @@ bool NookFont::get_string_size(std::string str, long *width, long *yMax, long *y
   *yMax = 0;
   *yMin = 0;
 
-  for (std::string::iterator i = str.begin(); i != str.end(); i++){
+  for (std::wstring::iterator i = str.begin(); i != str.end(); i++){
     ret = FT_Load_Char(m_face, *i, FT_LOAD_RENDER) ;
     if (ret != 0){
-      std::cerr << "Failed to load char " << *i << std::endl;
+      std::cerr << "Failed to load char " << (long)*i << std::endl;
       return false;
     }
 
     gs = m_face->glyph ;
+
+    /*
     if (*i == ' '){
       *width += gs->advance.x / 64 ;
       continue ;
     }
+    */
 
-    *width += gs->bitmap.width + gs->bitmap_left;
+    if ((gs->advance.x / 64) > (gs->bitmap.width + gs->bitmap_left))
+      *width += gs->advance.x / 64;
+    else
+      *width += gs->bitmap.width + gs->bitmap_left;
+
     // Work out the max height needed. Rows will be more that bitmap_top when the letter drops below the 
     // baseline. Add this difference on top of the rows to work out total bitmap height for this word. 
     if (gs->bitmap_top > *yMax) *yMax = gs->bitmap_top;
@@ -105,7 +112,7 @@ bool NookFont::get_string_size(std::string str, long *width, long *yMax, long *y
   return true;
 }
 
-DisplayImage& NookFont::write_string(std::string str, long size)
+DisplayImage& NookFont::write_string(std::wstring str, long size)
 {
   long ret = 0;
   long canvas_width = 0, canvas_height = 0, yMax = 0, yMin = 0;
@@ -132,20 +139,25 @@ DisplayImage& NookFont::write_string(std::string str, long size)
   m_img.setBGGrey(255) ;
   m_img.eraseBackground() ;
 
-  for (std::string::iterator i = str.begin(); i != str.end(); i++){
+  for (std::wstring::iterator i = str.begin(); i != str.end(); i++){
     ret = FT_Load_Char(m_face, *i, FT_LOAD_RENDER) ;
     if (ret != 0){
-      std::cerr << "Failed to load char " << *i << std::endl;
+      std::cerr << "Failed to load char " << (long)*i << std::endl;
       m_img.createImage(0,0,0) ; // Clear the image
       return m_img;
     }
 
-    if (*i == ' '){
+    FT_Bitmap bm = m_face->glyph->bitmap ;
+    if (bm.width == 0){
+      // No bitmap to print. May be a space character
       pen_x += m_face->glyph->advance.x / 64 ;
       continue ;
     }
 
-    FT_Bitmap bm = m_face->glyph->bitmap ;
+    pen_x += m_face->glyph->bitmap_left;
+    pen_y = yMax - m_face->glyph->bitmap_top ;
+
+
     if (bm.pixel_mode != FT_PIXEL_MODE_GRAY){
       // Expecting 8bit greyscale
       std::cerr << "Bitmap bit depth not 8bit grey. Pixel mode: " << bm.pixel_mode << std::endl;
@@ -161,10 +173,8 @@ DisplayImage& NookFont::write_string(std::string str, long size)
       std::cerr << "Bitmap height of " << bm.rows << " doesn't match expected height allocated of " << canvas_height << std::endl;
     }
 
-    //std::cout << "Drawing character: " << *i <<  " rows: " << bm.rows << " width: " << bm.width << std::endl;
+    //std::cout << "Drawing character: " << (char)*i <<  " rows: " << bm.rows << " width: " << bm.width << " advancex: " << (m_face->glyph->advance.x /64) << std::endl;
     // Copy to the internal image and return a reference to the internal object
-    pen_x += m_face->glyph->bitmap_left;
-    pen_y = yMax - m_face->glyph->bitmap_top ;
     for (unsigned long row=0; row < bm.rows; row++){
       for (unsigned long col=0; col < bm.width; col++){
 	// Use the colour and pixel setting calls. 

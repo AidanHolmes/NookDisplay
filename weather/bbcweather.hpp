@@ -3,13 +3,15 @@
 
 #include <string>
 
+std::wstring utf8_to_wide(std::string &str);
+
 class BBCWeather ;
 
 class BBCWeatherDay{
 public:
   friend BBCWeather;
-  std::string get_title(){return m_title;} ;
-  std::string get_description(){return m_description;} ;
+  std::wstring get_title(){return utf8_to_wide(m_title);} ;
+  std::wstring get_description(){return utf8_to_wide(m_description);} ;
 protected:
   std::string m_title ;
   std::string m_description ;

@@ -29,6 +29,7 @@ public:
   // Display functions
   bool init_display(std::string strFrameBuffer, std::string strrefresh) ; 
   bool write_to_nook(DisplayImage &img, bool bFull = false) ;
+  void rotate_display(bool bLandscape) ;
   
   // Start the application. Function returns when app closes
   // This needs implementing by an application object derived from this
@@ -57,6 +58,8 @@ protected:
 
   NookTouch m_inputtouch;
   bool m_binputtouch_enabled ;
+
+  bool m_bLandscape ;
 };
 
 #endif

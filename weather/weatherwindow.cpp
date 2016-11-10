@@ -28,7 +28,6 @@ void WeatherWnd::initialise()
   iconwnd.create(50,50,256,256) ;
   add_window(iconwnd) ;
   m_fnt.load_font("/usr/share/fonts/ttf/LiberationSans-Regular.ttf") ;
-  loadweather() ;
 }
 
 bool WeatherWnd::draw()

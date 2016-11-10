@@ -55,6 +55,23 @@ void NookWindow::invalidate_window(bool bFull)
   if (bFull) m_enState = verydirty ;
 }
 
+bool NookWindow::resize(unsigned int w, unsigned int h)
+{
+  bool ret ;
+  if (w == m_width && h == m_height)
+    return true ; // nothing to do
+
+  // Create a greyscale canvas for the window.
+  ret = canvas.createImage(w, h, 8) ;
+  if (!ret) return false ;
+  
+  // Do a full window refresh to update and redraw
+  // graphics.
+  invalidate_window(true) ;
+  
+  return true ;
+}
+
 void NookWindow::redraw()
 {
   if (draw()){ // parent draws before child
