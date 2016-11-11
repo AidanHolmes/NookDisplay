@@ -65,9 +65,22 @@ class NookTouch : public NookInput{
 public:
   NookTouch() ;
   TouchEvent& get_next_touch() ;
+  
+  // Replace create in this instance which calls the base class but also 
+  // sets the min and max values for X and Y inputs.
+  bool create(std::string strDev, unsigned int eventid) ;
+
+  // Use the touch screen in landscape mode rotated
+  // 90 degrees clockwise.
+  void rotate_90_right(bool brotate){m_rotated = brotate;} ;
 protected:
   bool m_got_x ;
   bool m_got_y ;
+  bool m_rotated ;
+  int m_min_x, m_max_x ;
+  int m_min_y, m_max_y ;
+  long m_tmp_x ;
+  long m_tmp_y ;
 private:
   TouchEvent m_evtCache ;
 };

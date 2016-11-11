@@ -106,6 +106,9 @@ void NookApp::rotate_display(bool bLandscape)
 
   m_bLandscape = bLandscape ;
 
+  if (m_binputtouch_enabled)
+    m_inputtouch.rotate_90_right(bLandscape) ;
+
   if (bLandscape){
     m_fbw = m_vi.yres ;
     m_fbh = m_vi.xres ;

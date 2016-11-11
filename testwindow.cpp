@@ -46,7 +46,7 @@ bool TestNookWnd::draw()
     std::cerr << "Failed to draw rectangle onto canvas\n" ;
 
   //DisplayImage fntstr = m_fnt.write_string(m_fnt.get_family_name(), 16) ;
-  DisplayImage fntstr = m_fnt.write_string("glyph justify", 16) ;
+  DisplayImage fntstr = m_fnt.write_string(L"glyph justify", 16) ;
   canvas.copy(fntstr, 2, 10, 400) ;
 
   return true ;

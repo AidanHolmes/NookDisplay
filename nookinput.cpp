@@ -121,9 +121,47 @@ NookTouch::NookTouch()
   m_evtCache.touch_down = false ;
   m_evtCache.x = 0;
   m_evtCache.y = 0;
+  m_tmp_x = m_tmp_y = 0 ;
 
   m_got_x = false ;
   m_got_y = false ;
+
+  m_min_x = m_max_x = m_min_y = m_max_y = 0 ;
+
+  m_rotated = false ;
+}
+
+bool NookTouch::create(std::string strDev, unsigned int eventid)
+{
+  int abs[5] ;
+
+  bool bret = NookInput::create(strDev, eventid);
+  if (!bret) return false;
+
+  // Query X
+  if (ioctl(m_fd, EVIOCGABS(ABS_X), abs) < 0){
+    std::cerr << "EVIOCGABS query failed for absolute X\n";
+    close(m_fd) ;
+    m_fd = -1 ;
+    return false ;
+  }
+  m_min_x = abs[1] ;
+  m_max_x = abs[2] ;
+
+  // Query Y
+  if (ioctl(m_fd, EVIOCGABS(ABS_Y), abs) < 0){
+    std::cerr << "EVIOCGABS query failed for absolute Y\n";
+    close(m_fd) ;
+    m_fd = -1 ;
+    return false ;
+  }
+  m_min_y = abs[1] ;
+  m_max_y = abs[2] ;
+
+  std::cout << "ABS X Min: " << m_min_x << " Max: " << m_max_x << std::endl;
+  std::cout << "ABS Y Min: " << m_min_y << " Max: " << m_max_y << std::endl;
+
+  return true ;
 }
 
 TouchEvent& NookTouch::get_next_touch()
@@ -153,10 +191,10 @@ TouchEvent& NookTouch::get_next_touch()
       break ;
     case EV_ABS:
       if (m_event.code == ABS_X){
-	m_evtCache.x = m_event.value;
+	m_tmp_x = m_event.value;
 	m_got_x = true ;
       }else if (m_event.code == ABS_Y){
-	m_evtCache.y = m_event.value ;
+	m_tmp_y = m_event.value ;
 	m_got_y = true ;
       }
       break ;
@@ -168,6 +206,14 @@ TouchEvent& NookTouch::get_next_touch()
       m_got_x = m_got_y = false ;
       m_evtCache.valid = true ;
       m_evtCache.touch_down = true ; // Touch must be down
+      if (m_rotated){
+	// Transform x and y to landscape
+	m_evtCache.x = m_tmp_y;
+	m_evtCache.y = m_max_x - m_tmp_x ;
+      }else{
+	m_evtCache.x = m_tmp_x ;
+	m_evtCache.y = m_tmp_y ;
+      }
       return m_evtCache;
     }
     
