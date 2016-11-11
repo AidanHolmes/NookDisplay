@@ -37,8 +37,7 @@ public:
   // to line up with other words on screen.
   long get_baseline_offset(){return m_baseline_offset;};
 
-protected:
-  bool get_string_size(std::wstring str, long *width, long *yMax, long *yMin) ;
+  bool get_string_size(std::wstring str, long size, long *width, long *yMax, long *yMin);
 
 protected:
   long m_baseline_offset ;

@@ -72,7 +72,7 @@ bool NookFont::set_face_id(long id)
   return true ;
 }
 
-bool NookFont::get_string_size(std::wstring str, long *width, long *yMax, long *yMin)
+bool NookFont::get_string_size(std::wstring str, long size, long *width, long *yMax, long *yMin)
 {
   long ret = 0 ;
   if (!m_face) return false ;
@@ -81,6 +81,12 @@ bool NookFont::get_string_size(std::wstring str, long *width, long *yMax, long *
   *width = 0;
   *yMax = 0;
   *yMin = 0;
+
+  ret = FT_Set_Char_Size(m_face, 0, size * 64, m_dpiwidth, m_dpiheight) ;
+  if (ret != 0){
+    std::cerr << "Cannot set font size to " << size << "pt \n" ;
+    return false ;
+  }
 
   for (std::wstring::iterator i = str.begin(); i != str.end(); i++){
     ret = FT_Load_Char(m_face, *i, FT_LOAD_RENDER) ;
@@ -126,7 +132,7 @@ DisplayImage& NookFont::write_string(std::wstring str, long size)
     return m_img;
   }
 
-  if (!get_string_size(str, &canvas_width, &yMax, &yMin)){
+  if (!get_string_size(str, size, &canvas_width, &yMax, &yMin)){
     m_img.createImage(0,0,0) ;
     return m_img;
   }

@@ -30,6 +30,9 @@ void TestNookWnd::initialise()
   iconwnd.create(50,50,256,256) ;
   add_window(iconwnd) ;
   m_fnt.load_font("/usr/share/fonts/ttf/LiberationSans-Regular.ttf") ;
+  m_btn.create(100,600,70,30) ;
+  m_btn.add_text(L"Test") ;
+  add_window(m_btn) ;
 }
 
 bool TestNookWnd::draw()
@@ -61,11 +64,14 @@ void TestNookWnd::key_event(KeyEvent &keys)
 
 void TestNookWnd::touch_event(TouchEvent &touch)
 {
+  NookWindow::touch_event(touch) ;
+  /*
   std::string strState = "up";
   if (touch.touch_down) strState = "down" ;
   std::cout << "Touch X:" << touch.x << " Y: " << touch.y << " state: " << strState << std::endl;
 
   iconwnd.set_origin(touch.x, touch.y) ;
+  */
 }
 
 bool TestNookWnd::tick()

@@ -5,6 +5,7 @@
 #include "nookinput.hpp"
 #include <time.h>
 #include "nookfont.hpp"
+#include "nookbutton.hpp"
 
 class WeatherIcon: public NookWindow{
 public:
@@ -29,6 +30,7 @@ private:
 
   WeatherIcon iconwnd ;
   NookFont m_fnt ;
+  NookButton m_btn ;
 } ;
 
 
