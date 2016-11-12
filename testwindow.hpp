@@ -6,6 +6,7 @@
 #include <time.h>
 #include "nookfont.hpp"
 #include "nookbutton.hpp"
+#include "nookmessagebox.hpp"
 
 class WeatherIcon: public NookWindow{
 public:
@@ -19,7 +20,7 @@ public:
   virtual bool draw() ;
   virtual bool tick() ;
   virtual void key_event(KeyEvent &keys) ;
-  virtual void touch_event(TouchEvent &touch) ;
+  virtual void touch_event(TouchEvent &touch, unsigned int x_offset, unsigned int y_offset);
   virtual void initialise() ;
 
 private:
@@ -31,6 +32,7 @@ private:
   WeatherIcon iconwnd ;
   NookFont m_fnt ;
   NookButton m_btn ;
+  NookMsgBox m_msgbox ;
 } ;
 
 

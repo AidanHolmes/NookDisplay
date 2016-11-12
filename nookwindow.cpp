@@ -10,18 +10,34 @@ NookWindow::NookWindow()
   m_enState = dirty ; // Start off dirty for every new window
   m_width = m_height = 0 ;
   m_copy_mode = 0 ;
+  m_pApp = NULL ;
+  m_pParentWnd = NULL ;
 }
 
-bool NookWindow::create(unsigned int x, unsigned int y, unsigned int width, unsigned int height)
+NookApp* NookWindow::get_app()
+{
+  return m_pApp ;
+}
+
+bool NookWindow::create(unsigned int x, 
+			unsigned int y, 
+			unsigned int width, 
+			unsigned int height, 
+			NookWindow *pParent, 
+			std::string strName, 
+			NookApp *pApp)
 {
   bool ret = false;
 
+  m_strName = strName ;
+  m_pApp = pApp ;
   m_x_pos = x;
   m_y_pos = y;
   m_width = width ;
   m_height = height;
   ret = canvas.createImage(width, height, 8) ;
   if (!ret) return false ;
+  m_pParentWnd = pParent ;
   initialise() ; // Call the windows initialisation to finish any setup
   return true ;
 }
@@ -97,10 +113,10 @@ void NookWindow::key_event(KeyEvent &keys)
   }
 }
 
-void NookWindow::touch_event(TouchEvent &touch)
+void NookWindow::touch_event(TouchEvent &touch, unsigned int x_offset, unsigned int y_offset)
 {
   // Dispatch touch events to all child windows
   for (vector<NookWindow*>::iterator i=m_children.begin(); i != m_children.end(); i++){
-    (*i)->touch_event(touch) ;
+    (*i)->touch_event(touch, (*i)->get_x_pos()+x_offset, (*i)->get_y_pos()+y_offset) ;
   }
 }

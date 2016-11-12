@@ -33,6 +33,11 @@ void TestNookWnd::initialise()
   m_btn.create(100,600,70,30) ;
   m_btn.add_text(L"Test") ;
   add_window(m_btn) ;
+
+  m_msgbox.create(200,300,300, 200) ;
+  m_msgbox.set_text(L"Message to the world", 8) ;
+  add_window(m_msgbox) ;
+
 }
 
 bool TestNookWnd::draw()
@@ -62,16 +67,15 @@ void TestNookWnd::key_event(KeyEvent &keys)
   std::cout << "Key " << strState << ", ID: " << (int)keys.code << std::endl;
 }
 
-void TestNookWnd::touch_event(TouchEvent &touch)
+void TestNookWnd::touch_event(TouchEvent &touch, unsigned int x_offset, unsigned int y_offset)
 {
-  NookWindow::touch_event(touch) ;
-  /*
-  std::string strState = "up";
-  if (touch.touch_down) strState = "down" ;
-  std::cout << "Touch X:" << touch.x << " Y: " << touch.y << " state: " << strState << std::endl;
-
-  iconwnd.set_origin(touch.x, touch.y) ;
-  */
+  if (!m_msgbox.is_hidden()){
+    // Message box is modal so just send touch messages there
+    m_msgbox.touch_event(touch,x_offset+m_msgbox.get_x_pos(), y_offset + m_msgbox.get_y_pos()) ;
+    return ;
+  }
+  
+  NookWindow::touch_event(touch, x_offset, y_offset) ;
 }
 
 bool TestNookWnd::tick()

@@ -93,7 +93,7 @@ void NookApp::dispatch_app_events()
   if (m_binputtouch_enabled){
     TouchEvent touch = m_inputtouch.get_next_touch() ;
     if (touch.valid){
-      get_active_window()->touch_event(touch);
+      get_active_window()->touch_event(touch, get_active_window()->get_x_pos(), get_active_window()->get_y_pos());
     }
   }
 

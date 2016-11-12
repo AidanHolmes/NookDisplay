@@ -1,17 +1,35 @@
 #ifndef __NOOKWINDOW_HPP
 #define __NOOKWINDOW_HPP
 
+#include "nookapp.hpp"
 #include <vector>
 #include "displayimage.hpp"
 #include "nookinput.hpp"
+#include <string>
+
+class NookApp ;
 
 class NookWindow{
 public:
   NookWindow();
   enum state{clean,dirty,verydirty} ; // Window states
 
+  void set_name(std::string name){m_strName = name;};
+  std::string get_name(){return m_strName;};
+
+  // Set the parent window. This is called from create normally so shouldn't
+  // need setting unless the parent needs to change
+  void set_parent(NookWindow *parent){m_pParentWnd = parent;} ;
+  NookWindow* get_parent(){return m_pParentWnd;}; 
+
   // Create the screen for the window
-  bool create(unsigned int x, unsigned int y, unsigned int width, unsigned int height) ;
+  bool create(unsigned int x, 
+	      unsigned int y, 
+	      unsigned int width, 
+	      unsigned int height, 
+	      NookWindow *pParent = NULL,
+	      const std::string strName = "", 
+	      NookApp *pApp = NULL) ;
 
   // Add window as a child window
   void add_window(NookWindow &wnd) ;
@@ -68,9 +86,15 @@ public:
   virtual void key_event(KeyEvent &keys) ;
 
   // Called for touchscreen events
-  virtual void touch_event(TouchEvent &touch) ;
+  virtual void touch_event(TouchEvent &touch, unsigned int x_offset, unsigned int y_offset);
 
-  // Access is required to this object externally. This won't mess around with
+  // If the application pointer was set then return it through
+  // get_app()
+  NookApp *get_app() ;
+
+public:
+  // Access is required to this object externally. 
+  // This won't mess around with
   // friend classes to make access work.
   DisplayImage canvas;
   
@@ -82,6 +106,9 @@ protected:
   unsigned int m_x_pos, m_y_pos ;
   unsigned int m_width, m_height ;
   int m_copy_mode ;
+  NookApp *m_pApp ;
+  std::string m_strName ;
+  NookWindow *m_pParentWnd ;
 
 private:
 

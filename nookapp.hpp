@@ -4,7 +4,11 @@
 #include <string>
 #include <vector>
 #include "nookwindow.hpp"
+#include "nookinput.hpp"
+#include "displayimage.hpp"
 #include <linux/fb.h>
+
+class NookWindow ;
 
 class NookApp{
 public:
@@ -30,7 +34,7 @@ public:
   bool init_display(std::string strFrameBuffer, std::string strrefresh) ; 
   bool write_to_nook(DisplayImage &img, bool bFull = false) ;
   void rotate_display(bool bLandscape) ;
-  
+
   // Start the application. Function returns when app closes
   // This needs implementing by an application object derived from this
   // class

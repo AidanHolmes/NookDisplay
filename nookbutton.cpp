@@ -1,16 +1,19 @@
 #include "nookbutton.hpp"
 #include <string>
 #include "nookfont.hpp"
+#include <iostream>
 
-void NookButton::add_text(std::wstring strtxt)
+void NookButton::add_text(std::wstring strtxt, long pt_size)
 {
   m_text = strtxt ;
   m_btndown = false ;
+  m_txtsize = pt_size ;
 }
 
 void NookButton::initialise()
 {
   m_fnt.load_font("/usr/share/fonts/ttf/LiberationSans-Regular.ttf") ;
+  m_txtsize = 0 ;
 }
 
 bool NookButton::draw()
@@ -34,8 +37,11 @@ bool NookButton::draw()
     canvas.setFGGrey(200);
     canvas.drawRect(1,1, m_width-4, m_height-4, true) ;
   }
-  // One font pt is 1/72 of an inch. Nook is about 170dpi
-  long pt = (m_height - (inner_border *2)) * 72 / 170 ;
+  long pt = m_txtsize ;
+  if (pt == 0){
+    // One font pt is 1/72 of an inch. Nook is about 170dpi
+    pt = (m_height - (inner_border *2)) * 72 / 170 ;
+  }
   if (pt < 6) pt = 6 ; // going to look odd as button is so small
 
   DisplayImage txt = m_fnt.write_string(m_text, pt) ;
@@ -52,11 +58,11 @@ bool NookButton::draw()
   return true ;
 }
 
-void NookButton::touch_event(TouchEvent &touch)
+void NookButton::touch_event(TouchEvent &touch, unsigned int x_offset, unsigned int y_offset)
 {
   if (is_hidden()) return ; // cannot process if hidden
-  if (touch.x >= (int)m_x_pos && touch.x <= (int)(m_x_pos+m_width) &&
-      touch.y >= (int)m_x_pos && touch.y <= (int)(m_y_pos+m_height)){
+  if (touch.x >= (int)x_offset && touch.x <= (int)(x_offset+m_width) &&
+      touch.y >= (int)y_offset && touch.y <= (int)(y_offset+m_height)){
     // Touch is within the button window area
     if (touch.touch_down != m_btndown){
       // State has changed. Call the events first

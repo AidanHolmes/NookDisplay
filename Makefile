@@ -3,7 +3,7 @@ CXXFLAGS=-Wall -I../graphicslib/
 LIBS = -ljpeg
 LDFLAGS = 
 
-SRCS_LIB = ../graphicslib/displayimage.cpp testapp.cpp testwindow.cpp nookapp.cpp nookwindow.cpp nookinput.cpp nookfont.cpp nookbutton.cpp
+SRCS_LIB = ../graphicslib/displayimage.cpp testapp.cpp testwindow.cpp nookapp.cpp nookwindow.cpp nookinput.cpp nookfont.cpp nookbutton.cpp nookmessagebox.cpp
 H_LIB = $(SRCS_LIB:.cpp=.hpp)
 OBJS_LIB = $(SRCS_LIB:.cpp=.o)
 
