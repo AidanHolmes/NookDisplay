@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+
 class HTTPConnection{
 public:
   HTTPConnection() ;
@@ -18,12 +19,35 @@ public:
   void reset() ;
 
 protected:
+  void parse_content_type(std::string str) ;
+  void process_headers(std::string id, std::string val);
+  const char* parse_status_header(const char *szBuffer) ;
+  const char* parse_entities(const char *szBuffer) ;
   void tcp_disconnect(int fd);
   int tcp_connect(const std::string strServer, const unsigned int port) ;
+  unsigned long read_hex(char c, unsigned long val);
+  unsigned long read_chunk(const char *szBuffer);
+  bool read_data(int sfd, unsigned long size, std::string *str);
+  bool read_line(int sfd, std::string *str);
+
+
+  // Request parameters
   std::string m_urn ;
   std::string m_client_name ;
-  int m_last_http_code ;
+
+  // Response parameters
   std::string m_data ;
+  std::vector<std::string> m_headers ;
+  std::vector<std::string> m_values ;
+  std::vector<std::string> m_content_attr;
+  std::vector<std::string> m_content_value;
+  bool m_is_chunked ;
+  int m_request_status ;
+  std::string m_str_status ;
+  unsigned int m_http_major;
+  unsigned int m_http_minor ;
+  int m_content_length ;
+  std::string m_mediatype ;
 };
 
 

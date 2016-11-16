@@ -13,6 +13,7 @@
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <errno.h>
+#include "identifier.hpp"
 
 #ifndef SHUT_RDWR
 #define SHUT_RDWR 2
@@ -24,17 +25,24 @@
 
 #define MAXLINE 4096
 
+
 HTTPConnection::HTTPConnection()
 {
-  m_client_name = "homebrew/1.0" ;
+  m_client_name = "Homebrew/1.0" ;
   reset() ;
 }
 
 void HTTPConnection::reset()
 {
-  m_last_http_code = 0 ;
   m_data.clear() ;
   m_urn.clear() ;
+  m_headers.clear() ;
+  m_values.clear() ;
+  m_is_chunked = false ;
+  m_request_status = 0 ;
+  m_str_status.clear() ;
+  m_http_minor = m_http_major = 0 ;
+  m_content_length = 0;
 }
 
 std::string HTTPConnection::get_data()
@@ -44,7 +52,7 @@ std::string HTTPConnection::get_data()
 
 int HTTPConnection::get_http_code()
 {
-  return m_last_http_code ;
+  return m_request_status ;
 }
 
 void HTTPConnection::set_client(const std::string client_name)
@@ -57,12 +65,213 @@ void HTTPConnection::set_urn(const std::string urn)
   m_urn = urn ;
 }
 
+unsigned long HTTPConnection::read_hex(char c, unsigned long val)
+{
+  unsigned long num = 0 ;
+  if (c >= '0' && c <= '9') num = c - '0' ;
+  if (c >= 'A' && c <= 'F') num = c - 'A' + 10 ;
+  if (c >= 'a' && c <= 'f') num = c - 'a' + 10 ;
+  
+  return (val * 16) + num ;
+}
+
+unsigned long HTTPConnection::read_chunk(const char *szBuffer)
+{
+  Identifier term("\r\n") ;
+  bool end = false ;
+  const char *p = szBuffer ;
+  unsigned long size = 0;
+  while (*p != '\0'){
+    if (term.add(*p)) break ;
+    if (*p == ';'){ end = true ;continue ;}
+    if (!end) size = read_hex(*p, size);
+    p++ ;
+  }
+  return size ;
+}
+
+bool HTTPConnection::read_line(int sfd, std::string *str)
+{
+  Identifier term ("\r\n") ;
+  char c = 0;
+  int nres = 0;
+  str->clear() ;
+  do{
+    if ( (nres = read(sfd, &c, 1)) < 0){
+      if (errno == EINTR) continue ;
+      else{
+	std::cerr << "Failed to read HTTP data stream\n" ;
+	tcp_disconnect(sfd) ;
+	return false ;
+      }
+    }
+    *str += c ;
+  }while (term.add(c));
+
+  return true ;
+}
+
+const char* HTTPConnection::parse_status_header(const char *szBuffer)
+{
+  Identifier http("HTTP/") ;
+  Identifier term("\r\n") ;
+  unsigned int major = 0, minor = 0, status = 0, state = 0;
+  // Read the status header
+  const char *p = szBuffer ;
+  while (*p != '\0'){
+    http.add(*p) ;
+    if (term.add(*p)){ 
+      if (status == 0) return NULL ; // cannot find status
+      m_request_status = status ;
+      m_http_major = major ;
+      m_http_minor = minor ;
+      return p+1 ; // Return updated pointer to end of header
+    }
+    if (http.get_count() > 0){
+      // Found the HTTP header
+      if (*p >= '0' && *p <= '9' && state <= 2){
+	if (state == 0){
+	  major = (major * 10) + (*p - '0') ;
+	}else if (state == 1){
+	  minor = (minor * 10) + (*p - '0') ;
+	}else if (state == 2){
+	  status = (status * 10) + (*p - '0') ;
+	}
+      }else if (*p == '.'){
+	state = 1;
+      }else if (state == 1 && *p == ' '){ 
+	state = 2 ;
+      }else if (state == 2 && *p == ' '){
+	state = 3 ;
+      }else if (state == 3){
+	m_str_status.push_back(*p) ;
+      }
+    }
+    p++ ;
+  }
+  return NULL ; // ran out of characters, didn't find header
+}
+
+void HTTPConnection::process_headers(std::string id, std::string val)
+{
+  std::cout << "Found header: (" << id << ") value: (" << val << ")\n";
+  if (id == "Content-Length") m_content_length = atoi(val.c_str()) ;
+  if (id == "Transfer-Encoding" && val == "chunked") m_is_chunked = true;
+  if (id == "Content-Type") parse_content_type (val) ;
+}
+
+void HTTPConnection::parse_content_type(std::string str)
+{
+  Identifier term("\r\n") ;
+  const char *p = NULL ;
+  int state = 0 ;
+  std::string attribute, value ;
+  bool esc = false ;
+  
+  for(p = str.c_str() ;*p != '\0'; p++){
+    if (term.add(*p)) break ;
+
+    if (state !=3){
+      if (*p == ' ' || *p == '\t') continue ;
+      if (*p == ';'){ 
+	if (attribute.length() > 0){
+	  m_content_attr.push_back(attribute) ; attribute.clear();
+	  m_content_value.push_back(value) ; value.clear() ;
+	}
+	state = 1; 
+	continue;
+      }
+      else if (*p == '=' && state == 1){state = 2; continue;}
+      else if (*p == '\"' && state == 2){state = 3 ; continue;}
+    }else if (*p == '\"' && !esc && state == 3){state=1;continue;}
+    else if (*p == '\\' && state == 3){ esc = true ;continue ;}
+
+    if (state == 0) m_mediatype.push_back(*p) ;
+    else if (state == 1) attribute.push_back(*p) ;
+    else if (state == 2 || state == 3) value.push_back(*p) ;
+    
+    esc = false ;
+  }
+
+  if (state > 0 && attribute.length() > 0){
+    m_content_attr.push_back(attribute) ;
+    m_content_value.push_back(value) ;
+  }
+
+}
+
+const char* HTTPConnection::parse_entities(const char *szBuffer)
+{
+  Identifier term("\r\n") ;
+  Identifier hdr_term("\r\n\r\n") ;
+  std::string strId, strVal ;
+  const char *p = NULL ;
+  int state = 0 ;
+  for (p=szBuffer; *p != '\0'; p++){
+    if ((*p == ' ' || *p == '\t') && state != 2) continue ;
+    if (hdr_term.add(*p)) return p+1 ;
+    if (term.add(*p)){
+      if (state >= 1){
+	m_headers.push_back(strId) ;
+	m_values.push_back(strVal) ;
+	process_headers(strId, strVal);
+      }
+      state = 0 ;
+      strId.clear() ;
+      strVal.clear() ;
+      continue ;
+    }
+    if (*p == ':'){
+      state = 1 ;
+      continue ;
+    }
+    if (*p != '\r' && *p != '\n'){
+      if (state == 0) strId.push_back(*p) ;
+      if (state == 1 && strVal.length() == 0) state = 2;
+      if (state == 2) strVal.push_back(*p);
+    }
+  }
+  return NULL ; // Header didn't terminate
+}
+
+bool HTTPConnection::read_data(int sfd, unsigned long size, std::string *str)
+{
+  char fbuffer[MAXLINE + 1] ;
+  char *buffer = fbuffer ;
+  int nres = 0 ;
+
+  if (size == 0) return true ;
+
+  if (size >= MAXLINE){
+    buffer = new char[size + 1] ;
+    if (!buffer) return false ;
+  }
+
+  while (size > 0){
+    if ( (nres = read(sfd, buffer, size)) < 0){
+      if (errno == EINTR) nres = 0 ;
+      else{
+	std::cerr << "Failed to read HTTP data stream\n" ;
+	tcp_disconnect(sfd) ;
+	if (buffer != fbuffer) delete[] buffer ;
+	return false ;
+      }
+    }
+    buffer[nres] = '\0' ;
+    *str += buffer ;
+    size -= nres ;
+  }
+
+  if (buffer != fbuffer) delete[] buffer ;
+
+  return true ;
+}
+
 bool HTTPConnection::send_get(const std::string strServer, const unsigned int port)
 {
   int sfd = -1, nres ;
   char buffer[MAXLINE + 1], szPort[10] ;
   std::string client_request ;
-  std::string server_response ;
 
   if ( (sfd = tcp_connect(strServer, port)) < 0){
     return false ;
@@ -82,84 +291,70 @@ bool HTTPConnection::send_get(const std::string strServer, const unsigned int po
     return false ;
   }
   
-  while ( (nres = read(sfd, buffer, MAXLINE)) > 0){
-    buffer[nres] = '\0' ;
-    server_response += buffer ;
-    if (nres < MAXLINE){
-      break;
+  nres = read(sfd, buffer, MAXLINE) ;
+  if (nres < 0){
+    if (errno == EINTR) nres = 0 ;
+    else{
+      std::cerr << "An error occurred reading from the socket\n" ;
+      tcp_disconnect(sfd) ;
+      return false;
     }
   }
+  buffer[nres] = '\0' ;
 
-  if (nres < 0){
-    std::cerr << "An error occurred reading from the socket\n" ;
+  std::cout << "<<DEBUG>>\n" << buffer << "<<DEBUG>>\n" ;
+
+  const char *p = parse_status_header(buffer) ;
+  if (!p){
+    std::cerr << "An error occurred reading the status line\n" ;
     tcp_disconnect(sfd) ;
     return false;
   }
 
-  //std::cout << "<<DEBUG>>\n" << server_response << "<<DEBUG>>\n" ;
-  // Parse header result
-  const int lenbuf = 10 ;
-  bool bChunked = false ;
-  int nstate = -1;
-  unsigned int i = 0;
-  char szStatus[] = "000" ;
-  char szLength[lenbuf] ;
-  szLength[lenbuf-1] = '\0' ;
-  char szTerminator[] = "\r\n\r\n", *p=szTerminator ;
-  char szContentLen[] = "Content-Length", *pcl=szContentLen;
-  char szChunked[] = "chunked", *pc=szChunked ;
-  for ( ; i < server_response.length(); i++){
-    char c = server_response[i] ;
-    if (nstate < 0 && c == ' ') nstate = 0 ;
-    else if (nstate >= 0 && nstate < 3) szStatus[nstate++] = c ;
-    else if (nstate >=4 && nstate < (4+lenbuf-2)){
-      if (c == '\r'){
-	szLength[nstate-4] = '\0' ;
-	nstate = 4+lenbuf-2;
-      }
-      if (c != ' ' && c != ':') szLength[(nstate++)-4] = c ;
-    }
-
-    pc = (*pc == c)?pc+1:szChunked ;
-    if (*pc == '\0') bChunked = true ;
-    pcl = (*pcl == c)?pcl+1:szContentLen ;
-    if (*pcl == '\0') nstate = 4 ;
-    p = (*p == c)?p+1:szTerminator ;
-    if (*p == '\0') break ;
-  }
-  if (*p != '\0'){
-    // Cannot find header terminator
-    std::cerr << "No terminator found for response header\n" ;
+  p = parse_entities(p) ;
+  if (!p){
+    std::cerr << "An error occurred reading the headers\n" ;
     tcp_disconnect(sfd) ;
-    return false ;
+    return false;
   }
 
-  m_data = server_response.substr(i+1) ;
-
-  int data_len = atoi(szLength) ;
-  if (data_len == 0 && bChunked){
-    // TO DO - read chunked data
-    std::cerr << "Chunked data in response. Cannot read\n" ;
-    tcp_disconnect(sfd) ;
-    return false ;
-  }
-
-  m_last_http_code = atoi(szStatus) ;
-
-  // Get remaining data if any
-  int remaining = data_len - m_data.length() ;
-  while (remaining > 0){
-    if ( (nres = read(sfd, buffer, MAXLINE)) < 0){
-      if (errno == EINTR) nres = 0 ;
-      else{
-	std::cerr << "Failed to read remaining of the HTTP body\n" ;
+  std::cout << "Parsing body...\n" ; 
+  if (m_is_chunked){
+    std::string line ;
+    unsigned long size = read_chunk(p) ;
+    m_data = p ;
+    size -= m_data.length() ;
+    
+    while (size > 0){
+      std::cout << "reading bytes " << size << " from stream\n" ;
+      if (!read_data(sfd, size, &m_data)){
+	std::cerr << "An error occurred reading chunked data\n" ;
 	tcp_disconnect(sfd) ;
-	return false ;
+	return false;
       }
-    }      
-    buffer[nres] = '\0' ;
-    m_data += buffer ;
-    remaining -= nres ;
+
+      if (!read_line(sfd, &line)){
+	std::cerr << "An error occurred reading chunked data line\n" ;
+	tcp_disconnect(sfd) ;
+	return false;
+      }
+
+      size = read_chunk(line.c_str()) ;
+      std::cout << "Reading chuck data of size " << size << std::endl;
+    }
+  }else{
+    m_data = p ;
+    // Get remaining data if any
+    long remaining = m_content_length - m_data.length() ;
+    std::cout << "Content length: " << m_content_length << std::endl;
+    std::cout << "Reading remaining data of length: " << remaining << std::endl;
+    if (remaining > 0){
+      if (!read_data(sfd, remaining, &m_data)){
+	std::cerr << "An error occurred reading content\n" ;
+	tcp_disconnect(sfd) ;
+	return false;
+      }
+    }
   }
 
   tcp_disconnect(sfd) ;
