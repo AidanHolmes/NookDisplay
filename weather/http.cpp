@@ -69,9 +69,10 @@ unsigned long HTTPConnection::read_hex(char c, unsigned long val)
 {
   unsigned long num = 0 ;
   if (c >= '0' && c <= '9') num = c - '0' ;
-  if (c >= 'A' && c <= 'F') num = c - 'A' + 10 ;
-  if (c >= 'a' && c <= 'f') num = c - 'a' + 10 ;
-  
+  else if (c >= 'A' && c <= 'F') num = c - 'A' + 10 ;
+  else if (c >= 'a' && c <= 'f') num = c - 'a' + 10 ;
+  else return val ; // Any other character
+
   return (val * 16) + num ;
 }
 
@@ -79,13 +80,14 @@ unsigned long HTTPConnection::read_chunk(const char *szBuffer)
 {
   Identifier term("\r\n") ;
   bool end = false ;
-  const char *p = szBuffer ;
+  const char *p = NULL ;
   unsigned long size = 0;
-  while (*p != '\0'){
+  for  (p=szBuffer; *p != '\0'; p++){
     if (term.add(*p)) break ;
     if (*p == ';'){ end = true ;continue ;}
-    if (!end) size = read_hex(*p, size);
-    p++ ;
+    if (!end){ 
+      size = read_hex(*p, size);
+    }
   }
   return size ;
 }
@@ -105,7 +107,7 @@ bool HTTPConnection::read_line(int sfd, std::string *str)
 	return false ;
       }
     }
-    *str += c ;
+    if (c != '\r' && c != '\n') *str += c ;
   }while (term.add(c));
 
   return true ;
@@ -154,10 +156,20 @@ const char* HTTPConnection::parse_status_header(const char *szBuffer)
 
 void HTTPConnection::process_headers(std::string id, std::string val)
 {
-  std::cout << "Found header: (" << id << ") value: (" << val << ")\n";
   if (id == "Content-Length") m_content_length = atoi(val.c_str()) ;
   if (id == "Transfer-Encoding" && val == "chunked") m_is_chunked = true;
   if (id == "Content-Type") parse_content_type (val) ;
+}
+
+std::string HTTPConnection::get_charset()
+{
+  // Don't use iterators as we need the index
+  for (int i=0; i < m_content_attr.size(); i++){
+    if (m_content_attr[i] == "charset")
+      return m_content_value[i] ;
+  }
+  // Cannot find the attribute in Content-Type
+  return std::string("") ;
 }
 
 void HTTPConnection::parse_content_type(std::string str)
@@ -167,9 +179,10 @@ void HTTPConnection::parse_content_type(std::string str)
   int state = 0 ;
   std::string attribute, value ;
   bool esc = false ;
-  
+
   for(p = str.c_str() ;*p != '\0'; p++){
     if (term.add(*p)) break ;
+    if (*p == '\r' || *p == '\n') continue ;
 
     if (state !=3){
       if (*p == ' ' || *p == '\t') continue ;
@@ -284,7 +297,6 @@ bool HTTPConnection::send_get(const std::string strServer, const unsigned int po
   }
   client_request += "\r\nUser-Agent: " + m_client_name + "\r\n\r\n" ;
 
-  //std::cout << "Sending:\n" << client_request << std::endl; 
   nres = write(sfd, client_request.c_str(), client_request.length()) ;
   if (nres != (ssize_t)client_request.length()){
     tcp_disconnect(sfd) ;
@@ -302,8 +314,6 @@ bool HTTPConnection::send_get(const std::string strServer, const unsigned int po
   }
   buffer[nres] = '\0' ;
 
-  std::cout << "<<DEBUG>>\n" << buffer << "<<DEBUG>>\n" ;
-
   const char *p = parse_status_header(buffer) ;
   if (!p){
     std::cerr << "An error occurred reading the status line\n" ;
@@ -318,36 +328,42 @@ bool HTTPConnection::send_get(const std::string strServer, const unsigned int po
     return false;
   }
 
-  std::cout << "Parsing body...\n" ; 
   if (m_is_chunked){
     std::string line ;
     unsigned long size = read_chunk(p) ;
+    while(*p++ != '\n') ; // Skip forward past the chunk header line
     m_data = p ;
     size -= m_data.length() ;
     
     while (size > 0){
-      std::cout << "reading bytes " << size << " from stream\n" ;
       if (!read_data(sfd, size, &m_data)){
 	std::cerr << "An error occurred reading chunked data\n" ;
 	tcp_disconnect(sfd) ;
 	return false;
       }
 
+      // Read the chunk information line.
       if (!read_line(sfd, &line)){
 	std::cerr << "An error occurred reading chunked data line\n" ;
 	tcp_disconnect(sfd) ;
 	return false;
       }
+      if (line.length() == 0){
+	// New line occurs before the chunked string so this is expected
+	if (!read_line(sfd, &line)){
+	  std::cerr << "An error occurred reading chunked data line\n" ;
+	  tcp_disconnect(sfd) ;
+	  return false;
+	}
+      }
 
+      // Read the chunk information and extract the size of data to read
       size = read_chunk(line.c_str()) ;
-      std::cout << "Reading chuck data of size " << size << std::endl;
     }
   }else{
     m_data = p ;
     // Get remaining data if any
     long remaining = m_content_length - m_data.length() ;
-    std::cout << "Content length: " << m_content_length << std::endl;
-    std::cout << "Reading remaining data of length: " << remaining << std::endl;
     if (remaining > 0){
       if (!read_data(sfd, remaining, &m_data)){
 	std::cerr << "An error occurred reading content\n" ;

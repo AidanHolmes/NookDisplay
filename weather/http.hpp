@@ -9,14 +9,22 @@ class HTTPConnection{
 public:
   HTTPConnection() ;
 
+  static std::vector<std::string> whatsmyip();
+  void reset() ;
+
   void set_urn(const std::string urn) ;
   void set_client(const std::string client_name) ;
   bool send_get(const std::string strServer, const unsigned int port);
-  int get_http_code() ;
-  std::string get_data() ;
-  static std::vector<std::string> whatsmyip();
 
-  void reset() ;
+  // Query functions for returned data 
+  int get_http_code() ;
+  std::string get_response_str(){return m_str_status;} ;
+  std::string get_data() ;
+  int get_protocol_major(){return m_http_major;};
+  int get_protocol_minor(){return m_http_minor;};
+  std::string get_media_type(){return m_mediatype;};
+  std::string get_charset() ;
+
 
 protected:
   void parse_content_type(std::string str) ;
