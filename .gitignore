@@ -3,6 +3,3 @@
 *~
 *.so
 OpenWeatherMap.txt
-openweathercfg.h
-cache
-weathercache
