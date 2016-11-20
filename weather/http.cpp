@@ -25,6 +25,15 @@
 
 #define MAXLINE 4096
 
+#ifndef DEBUG
+#define DEBUG
+#endif
+
+#ifdef DEBUG
+#define DPRINT(x) std::cout << std::string("DBG: ") << x ;
+#else
+#define DPRINT(x)
+#endif
 
 HTTPConnection::HTTPConnection()
 {
@@ -108,7 +117,9 @@ bool HTTPConnection::read_line(int sfd, std::string *str)
       }
     }
     if (c != '\r' && c != '\n') *str += c ;
-  }while (term.add(c));
+  }while (!term.add(c));
+
+  DPRINT("<LINE RAW>" << *str << "</LINE RAW>\n") ;
 
   return true ;
 }
@@ -156,6 +167,7 @@ const char* HTTPConnection::parse_status_header(const char *szBuffer)
 
 void HTTPConnection::process_headers(std::string id, std::string val)
 {
+  DPRINT("Found header [" << id << "] with value [" << val << "]\n");
   if (id == "Content-Length") m_content_length = atoi(val.c_str()) ;
   if (id == "Transfer-Encoding" && val == "chunked") m_is_chunked = true;
   if (id == "Content-Type") parse_content_type (val) ;
@@ -166,6 +178,7 @@ std::string HTTPConnection::get_charset()
   // Don't use iterators as we need the index
   for (int i=0; i < m_content_attr.size(); i++){
     if (m_content_attr[i] == "charset")
+      DPRINT("Using character set " << m_content_value[i] << std::endl);
       return m_content_value[i] ;
   }
   // Cannot find the attribute in Content-Type
@@ -270,6 +283,7 @@ bool HTTPConnection::read_data(int sfd, unsigned long size, std::string *str)
 	return false ;
       }
     }
+    DPRINT("<RAW>\n" << buffer << "\n<RAW>\n") ;
     buffer[nres] = '\0' ;
     *str += buffer ;
     size -= nres ;
@@ -297,6 +311,7 @@ bool HTTPConnection::send_get(const std::string strServer, const unsigned int po
   }
   client_request += "\r\nUser-Agent: " + m_client_name + "\r\n\r\n" ;
 
+  DPRINT("Sending request:\n" << client_request << std::endl);
   nres = write(sfd, client_request.c_str(), client_request.length()) ;
   if (nres != (ssize_t)client_request.length()){
     tcp_disconnect(sfd) ;
@@ -313,6 +328,8 @@ bool HTTPConnection::send_get(const std::string strServer, const unsigned int po
     }
   }
   buffer[nres] = '\0' ;
+
+  DPRINT("<RAW>\n" << buffer << "\n<RAW>\n") ;
 
   const char *p = parse_status_header(buffer) ;
   if (!p){
@@ -335,6 +352,7 @@ bool HTTPConnection::send_get(const std::string strServer, const unsigned int po
     m_data = p ;
     size -= m_data.length() ;
     
+    DPRINT("Data is chunked. Reading  " << size << " bytes\n");
     while (size > 0){
       if (!read_data(sfd, size, &m_data)){
 	std::cerr << "An error occurred reading chunked data\n" ;
@@ -356,15 +374,17 @@ bool HTTPConnection::send_get(const std::string strServer, const unsigned int po
 	  return false;
 	}
       }
-
+      DPRINT("Chunked header: " << line << std::endl);
       // Read the chunk information and extract the size of data to read
       size = read_chunk(line.c_str()) ;
+      DPRINT("Chunked size parsed: " << size << std::endl);
     }
   }else{
     m_data = p ;
     // Get remaining data if any
     long remaining = m_content_length - m_data.length() ;
     if (remaining > 0){
+      DPRINT("Content length to read: " << remaining << " bytes\n");
       if (!read_data(sfd, remaining, &m_data)){
 	std::cerr << "An error occurred reading content\n" ;
 	tcp_disconnect(sfd) ;
