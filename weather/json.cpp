@@ -6,9 +6,21 @@
 
 #define WS(x) (x == ' ' || x == '\t' || x == '\r' || x == '\n')
 
+#ifndef DEBUG
+//#define DEBUG
+#endif
+
+#ifdef DEBUG
+#define DPRINT(x) std::cout << std::string("DBG: ") << x ;
+#else
+#define DPRINT(x)
+#endif
+
+
 JSONData::JSONData()
 {
   m_found = false ;
+  m_szdata = NULL ;
 }
 
 std::string JSONData::read(const std::vector<std::string> path)
@@ -23,8 +35,9 @@ std::string JSONData::read(const std::vector<std::string> path)
   m_path_it = m_search_path.begin() ;
   m_found = false ;
 
-  if (!parse_root(m_data.c_str())){
-    std::cout << "Parse root failed\n" ;
+  const char *buff = m_szdata;
+  if (m_data.length() > 0) buff = m_data.c_str() ;
+  if (!parse_root(buff)){
     m_last_value.clear() ;
   }
 
@@ -57,12 +70,12 @@ const char* JSONData::parse_array(const char *p)
   bool esc = false, quoted = false;
   if (m_path_it == m_search_path.end()) return NULL ;
   char *strtolptr ;
-  long array_index = 0, find_index = 0 ;
+  long array_index = 0, find_index = -1 ;
 
-  std::cout << "Seeking path: " << *m_path_it << std::endl ;
+  DPRINT("Seeking path: " << *m_path_it << std::endl) ;
 
   find_index = strtol(m_path_it->c_str(),&strtolptr,10) ;
-  if (strtolptr == m_path_it->c_str()) return NULL ; // no index in path
+  if (strtolptr == m_path_it->c_str()) find_index = -1;
 
   for ( ; *p != '\0'; p++){
     if (WS(*p) && !quoted) continue ;
@@ -74,7 +87,7 @@ const char* JSONData::parse_array(const char *p)
       esc = true ;
       continue ;
     }else if ((*p == ',' || *p == ']') && !quoted){
-      std::cout << "Value at index [" << array_index << "] " << strval << std::endl ;
+      DPRINT("Value at index [" << array_index << "] " << strval << std::endl) ;
       if (find_index == array_index){
 	m_path_it++ ;
 	if (m_path_it == m_search_path.end()){
@@ -120,27 +133,25 @@ const char* JSONData::parse_array(const char *p)
 
 const char* JSONData::parse_object(const char *p)
 {
-  std::string strval ;
+  std::string strval, strkey ;
   bool esc = false, quoted = false, returnval = false ;
   if (m_path_it == m_search_path.end()) return NULL ;
-  Identifier findme(m_path_it->c_str()) ;
   enum state{attribute, value} s = attribute ;
 
-  std::cout << "Seeking path: " << *m_path_it << std::endl ;
+  DPRINT("Seeking path: " << *m_path_it << std::endl) ;
 
   for ( ; *p != '\0'; p++){
-    //std::cout << *p << "(" << s << (quoted?"-q) ":") ") ;
     if (WS(*p) && !quoted) continue ;
     
     if (*p == '\"' && !esc){
       quoted = !quoted ;
       continue ;
     }else if (*p == ':' && !quoted && s == attribute){
-      if (findme.get_count() > 0){
-	std::cout << "Found key " << *m_path_it << std::endl;
+      if (strkey == *m_path_it){
+	DPRINT("Found key " << *m_path_it << std::endl);
 	m_path_it++ ;
  	if (m_path_it == m_search_path.end()){ 
-	  std::cout << "Search end\n" ;
+	  DPRINT("Search end\n") ;
 	  returnval = true ;
 	}
       }
@@ -150,12 +161,12 @@ const char* JSONData::parse_object(const char *p)
       esc = true ;
       continue ;
     }else if ((*p == ',' || *p == '}') && !quoted){
-      std::cout << "Read value [" << strval << "]\n";
-      if (findme.get_count() > 0 && returnval){
+      DPRINT("Read key [" << strkey << "] value \"" << strval << "\"\n");
+      if (returnval){
 	m_last_value = strval ;
 	m_found = true ;
 	return NULL ;
-      }else if (findme.get_count() > 0){
+      }else if (strkey == *m_path_it){
 	// There's no further arrays or objects. Failed to find
 	m_found = false ;
 	return NULL ;
@@ -163,10 +174,10 @@ const char* JSONData::parse_object(const char *p)
 
       if (*p == ','){
 	// Next attribute
-	std::cout << "Processing next attribute in object\n" ;
+	DPRINT("Processing next attribute in object\n") ;
 	s = attribute;
-	findme.reset() ;
 	strval.clear() ;
+	strkey.clear() ;
 	continue ;
       }else if (*p == '}'){
 	return p ; // Finished processing object
@@ -174,7 +185,7 @@ const char* JSONData::parse_object(const char *p)
     }
 
     if (s==attribute){
-      findme.add(*p);
+      strkey += *p ;
     }else if (s==value){
       esc = false ;
       if (*p == '{' && !quoted && strval.length() == 0){
@@ -188,6 +199,6 @@ const char* JSONData::parse_object(const char *p)
       }
     }
   }
-  std::cout << "Ran out of text. Hit terminator\n" ;
+  DPRINT("Ran out of text. Hit terminator\n") ;
   return NULL ; // No more text to parse
 }
