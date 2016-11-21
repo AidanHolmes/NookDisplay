@@ -2,7 +2,7 @@ CXXFLAGS=-Wall -I../../graphicslib/ -I.. -I/usr/include/freetype2
 LIBS=-ljpeg -lfreetype -lz -lpng
 LDFLAGS= 
 
-SRCS_LIB = ../../graphicslib/displayimage.cpp ../nookapp.cpp ../nookwindow.cpp ../nookinput.cpp ../nookfont.cpp http.cpp bbcweather.cpp weatherapp.cpp weatherwindow.cpp
+SRCS_LIB = ../../graphicslib/displayimage.cpp ../nookapp.cpp ../nookwindow.cpp ../nookinput.cpp ../nookfont.cpp http.cpp weatherapp.cpp weatherwindow.cpp summarywindow.cpp identifier.cpp
 H_LIB = $(SRCS_LIB:.cpp=.hpp)
 OBJS_LIB = $(SRCS_LIB:.cpp=.o)
 

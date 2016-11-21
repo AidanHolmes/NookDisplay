@@ -2,19 +2,7 @@
 #include <iostream>
 #include <time.h>
 #include "nookfont.hpp"
-#include "bbcweather.hpp"
 #include "http.hpp"
-
-bool WeatherIcon::draw()
-{
-  return true ;
-}
-
-void WeatherIcon::initialise()
-{
-  canvas.loadJPG("weather.jpg",8) ;
-  set_window_merge(true) ;
-}
 
 WeatherWnd::WeatherWnd()
 {
@@ -25,22 +13,31 @@ WeatherWnd::WeatherWnd()
 
 void WeatherWnd::initialise()
 {
-  iconwnd.create(50,50,256,256) ;
-  add_window(iconwnd) ;
+  const long wndsize=150 ;
+  long x=m_width-1 ;
+  long y=m_height-wndsize-1 ;
+
+  x -= wndsize ;
+  m_wnd4.create(x,y,wndsize,wndsize) ;
+  x -= wndsize ;
+  m_wnd3.create(x,y,wndsize,wndsize) ;
+  x -= wndsize ;
+  m_wnd2.create(x,y,wndsize,wndsize) ;
+  x -= wndsize ;
+  m_wnd1.create(x,y,wndsize,wndsize) ;
+
+  add_window(m_wnd1) ;
+  add_window(m_wnd2) ;
+  add_window(m_wnd3) ;
+  add_window(m_wnd4) ;
+
   m_fnt.load_font("/usr/share/fonts/ttf/LiberationSans-Regular.ttf") ;
+
+  canvas.loadJPG("gfx/main/snow.jpg",8) ;
 }
 
 bool WeatherWnd::draw()
 {
-  canvas.setFGGrey(0) ;
-  canvas.setBGGrey(255) ;
-  canvas.eraseBackground();
-
-  DisplayImage fntstr = m_fnt.write_string(m_day1, 8) ;
-  canvas.copy(fntstr, 2, 10, 320) ;
-
-  canvas.copy(m_fnt.write_string(m_day2, 8), 2, 10, 360) ;
-  canvas.copy(m_fnt.write_string(m_day3, 8), 2, 10, 400) ;
 
   return true ;
 }
@@ -57,22 +54,11 @@ void WeatherWnd::touch_event(TouchEvent &touch)
   std::string strState = "up";
   if (touch.touch_down) strState = "down" ;
   std::cout << "Touch X:" << touch.x << " Y: " << touch.y << " state: " << strState << std::endl;
-
-  iconwnd.set_origin(touch.x, touch.y) ;
 }
 
 void WeatherWnd::loadweather()
 {
-  HTTPConnection con ;
-  con.set_urn("/weather/feeds/en/2641170/3dayforecast.rss") ;
-  if (con.send_get("open.live.bbc.co.uk", 80)){
-    BBCWeather w ;
-    if (w.load(con.get_data())){
-      m_day1 = w.get_day(0).get_title() ;
-      m_day2 = w.get_day(1).get_title() ;
-      m_day3 = w.get_day(2).get_title() ;
-    }
-  }
+
 }
 
 bool WeatherWnd::tick()

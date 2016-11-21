@@ -6,12 +6,7 @@
 #include <time.h>
 #include "nookfont.hpp"
 #include <string>
-
-class WeatherIcon: public NookWindow{
-public:
-  virtual bool draw() ;
-  virtual void initialise() ;
-};
+#include "summarywindow.hpp"
 
 class WeatherWnd: public NookWindow{
 public:
@@ -29,7 +24,11 @@ private:
   time_t m_last;
   time_t m_full ;
 
-  WeatherIcon iconwnd ;
+  WeatherSummaryWnd m_wnd1 ;
+  WeatherSummaryWnd m_wnd2 ;
+  WeatherSummaryWnd m_wnd3 ;
+  WeatherSummaryWnd m_wnd4 ;
+
   NookFont m_fnt ;
   std::wstring m_day1, m_day2, m_day3 ;
 } ;
