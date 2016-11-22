@@ -24,13 +24,14 @@ private:
   time_t m_last;
   time_t m_full ;
 
-  WeatherSummaryWnd m_wnd1 ;
-  WeatherSummaryWnd m_wnd2 ;
-  WeatherSummaryWnd m_wnd3 ;
-  WeatherSummaryWnd m_wnd4 ;
+  long m_time ;
+  float m_temp ;
+  long m_code ;
+  std::wstring m_desc ;
+
+  WeatherSummaryWnd m_wnd[4] ;
 
   NookFont m_fnt ;
-  std::wstring m_day1, m_day2, m_day3 ;
 } ;
 
 

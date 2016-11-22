@@ -46,7 +46,7 @@ std::string JSONData::read(const std::vector<std::string> path)
 
 bool JSONData::parse_root(const char *buff)
 {
-  const char *p = NULL, *ret = NULL ;
+  const char *p = NULL;
 
   for (p = buff; *p != '\0'; p++){
     if (WS(*p)) continue ;
@@ -62,6 +62,7 @@ bool JSONData::parse_root(const char *buff)
       return false ; //unexpected character
     }
   }
+  return false;
 }
 
 const char* JSONData::parse_array(const char *p)

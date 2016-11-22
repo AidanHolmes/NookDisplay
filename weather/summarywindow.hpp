@@ -3,6 +3,7 @@
 
 #include "nookwindow.hpp"
 #include "nookfont.hpp"
+#include <string>
 
 class WeatherSummaryWnd: public NookWindow{
 public:
@@ -11,15 +12,20 @@ public:
   virtual void initialise();
 
   void set_code(int code) ;
-  void set_temperature(int temp) ;
+  void set_temperature(float temp) ;
   void set_time(long t) ;
+  void set_description(std::wstring str) ;
+
+protected:
+  void load_icon();
 
 protected:
   int m_code ;
   NookFont m_fnt ;
   long m_time ;
-  long m_temp;
+  float m_temp;
   DisplayImage m_icon ;
+  std::wstring m_desc ;
 };
 
 

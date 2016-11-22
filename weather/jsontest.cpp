@@ -5,13 +5,6 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define P(x,y) x.push_back(y);
-#define SET_PATH2(x,a,b) P(x,a) P(x,b)
-#define SET_PATH3(x,a,b,c) P(x,a) P(x,b) P(x,c)
-#define SET_PATH4(x,a,b,c,d) P(x,a) P(x,b) P(x,c) P(x,d)
-#define SET_PATH5(x,a,b,c,d,e) P(x,a) P(x,b) P(x,c) P(x,d) P(x,e)
-#define SET_PATH6(x,a,b,c,d,e,f) P(x,a) P(x,b) P(x,c) P(x,d) P(x,e) P(x,f)
-
 int main(int argc, char **argv)
 {
   FILE *f = NULL ;
