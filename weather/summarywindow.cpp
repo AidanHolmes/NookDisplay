@@ -2,6 +2,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <wchar.h>
+#include "utility.hpp"
 
 WeatherSummaryWnd::WeatherSummaryWnd()
 {
@@ -25,11 +26,11 @@ void WeatherSummaryWnd::load_icon()
     szfile = "gfx/snow.jpg" ;
   }else if (m_code >= 701 && m_code <= 781){
     szfile = "gfx/heavycloud.jpg" ;
-  }else if (m_code == 800 && m_code == 904 && m_code == 905){
+  }else if (m_code == 800 || m_code == 904 || m_code == 905){
     szfile = "gfx/clear.jpg" ;
   }else if (m_code >= 900 && m_code <= 902){
     szfile = "gfx/thunder.jpg" ;
-  }else if (m_code == 903 && m_code == 906){
+  }else if (m_code == 903 || m_code == 906){
     szfile = "gfx/freezingrain.jpg" ;
   }else{
     szfile = "gfx/clear.jpg" ;
@@ -48,7 +49,10 @@ bool WeatherSummaryWnd::draw()
   wchar_t szNumber[15] ;
   swprintf(szNumber, 14, L"%.1f\u00B0C", m_temp) ;
 
-  std::cout << "Time: " << m_time << ", code: " << m_code << ", temperature: " << m_temp << std::endl;
+  struct tm *ti ;
+  ti = localtime(&m_time) ;
+  wchar_t szTime[15] ;
+  swprintf(szTime, 14, L"%02d:%02d %02d-%ls", ti->tm_hour, ti->tm_min, ti->tm_mday, getmonth(ti->tm_mon)) ;
 
   canvas.setBGGrey(255) ;
   canvas.setFGGrey(0) ;
@@ -58,11 +62,18 @@ bool WeatherSummaryWnd::draw()
  
   canvas.drawRect(0,0, m_width-1, m_height-1) ;
 
-  DisplayImage txttemp = m_fnt.write_string(szNumber, 8) ; 
-  canvas.copy(txttemp, 2, 5,5) ;
+  unsigned int pen_y = 5, pen_x = 5;
+
+  DisplayImage txttemp ;
+  txttemp = m_fnt.write_string(szTime, 8) ; 
+  canvas.copy(txttemp, 2, pen_x, pen_y) ;
+  pen_y += txttemp.get_height() + 10;
+
+  txttemp = m_fnt.write_string(szNumber, 8) ; 
+  canvas.copy(txttemp, 2, pen_x, pen_y) ;
 
   txttemp = m_fnt.write_string(m_desc, 8) ;
-  canvas.copy(txttemp, 2, 5, m_height - txttemp.get_height() -1) ;
+  canvas.copy(txttemp, 2, pen_x, m_height - txttemp.get_height() -1) ;
 
   return true ;
 }
