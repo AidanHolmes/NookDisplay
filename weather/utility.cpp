@@ -1,12 +1,51 @@
 #include "utility.hpp"
 #include <locale.h>
 #include <string>
+#include <vector>
 #include <iostream>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <ifaddrs.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <string.h>
+
+std::vector<std::wstring> get_inet_address()
+{
+  struct ifaddrs *ifaddr, *ifa ;
+  int s ;
+  char host[NI_MAXHOST];
+  wchar_t whost[NI_MAXHOST*sizeof(wchar_t)] ;
+  std::vector<std::wstring> out ;
+  
+  if (getifaddrs(&ifaddr) == -1){
+    return out ;
+  }
+
+  for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next){
+    if (ifa->ifa_addr == NULL) continue ;
+
+    if (ifa->ifa_addr->sa_family == AF_INET){
+      s = getnameinfo(ifa->ifa_addr, 
+		      sizeof(struct sockaddr_in),
+		      host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST) ;
+      if (s != 0){
+	freeifaddrs(ifaddr) ;
+	return out ;
+      }
+      if (strcmp(host, "127.0.0.1") != 0){
+	for (int i=0; i < NI_MAXHOST; i++) whost[i] = host[i] ;
+	out.push_back(whost) ;
+      }
+    }
+  }
+  freeifaddrs(ifaddr) ;
+  return out ;
+}
 
 long get_battery()
 {

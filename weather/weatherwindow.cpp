@@ -100,35 +100,43 @@ bool WeatherWnd::draw()
   // Write the background image
   canvas.copy(m_background,0,0,0) ;
 
-  unsigned int pen_y = 5, pen_x = 5 ;
+  unsigned int pen_y = 5, pen_x = 20 ;
 
   DisplayImage txt ;
   // Write location
-  canvas.setFGGrey(128) ;
   txt = m_fnt.write_string(m_location, 30) ;
   canvas.copy(txt, 8, pen_x, pen_y) ;
   pen_y += txt.get_height() + 10 ;
-  pen_x = 20 ;
 
-  canvas.setFGGrey(0) ;
   // Write time
   txt = m_fnt.write_string(szTime, 12) ;
-  canvas.copy(txt, 2, pen_x, pen_y) ;
+  canvas.copy(txt, 8, pen_x, pen_y) ;
   pen_y += txt.get_height() + 30 ;
 
   // Write temperature
   txt = m_fnt.write_string(szTemperature, 40) ;
-  canvas.copy(txt, 2, pen_x, pen_y) ;
+  canvas.copy(txt, 8, pen_x, pen_y) ;
   pen_y += txt.get_height() + 10 ;
 
   // Write description
   txt = m_fnt.write_string(m_desc, 20) ;
-  canvas.copy(txt, 2, pen_x, pen_y) ;
+  canvas.copy(txt, 8, pen_x, pen_y) ;
   pen_y += txt.get_height() + 15 ;
 
+  pen_y = 5 ;
   // Write battery
   txt = m_fnt.write_string(szBatt, 10) ;
-  canvas.copy(txt, 2, m_width - txt.get_width() - 5, 5) ;
+  canvas.copy(txt, 8, m_width - txt.get_width() - 5, pen_y) ;
+  pen_y += txt.get_height() + 5 ;
+
+  std::vector<std::wstring> ipadd ;
+  ipadd = get_inet_address() ;
+  for (std::vector<std::wstring>::iterator i = ipadd.begin(); i < ipadd.end(); i++){
+    txt = m_fnt.write_string(*i, 10) ;
+    canvas.copy(txt, 8, m_width - txt.get_width() - 5, pen_y) ;
+    pen_y += txt.get_height() + 5 ;
+  }
+    
 
   return true ;
 }
@@ -153,10 +161,18 @@ void WeatherWnd::touch_event(TouchEvent &touch,unsigned int x_offset, unsigned i
 void WeatherWnd::loadweather()
 {
   JSONData json ;
-  char* szbuffer = NULL ;
+  char* szbuffer = NULL, szcache[] = "cache" ;
   int fd = -1, ret = 0, size = 0 ;
+  int minupdate = 3600 ; // 1 hour
 
-  if ((fd=open("cache", O_RDONLY)) < 0){
+  // Check age of data
+  struct stat cachestat ;
+  ret = stat(szcache, &cachestat) ;
+  if (ret == 0 && cachestat.st_mtime + minupdate < time(NULL)){
+    std::cout << "Cache is old and needs an update\n" ;
+  }
+
+  if ((fd=open(szcache, O_RDONLY)) < 0){
     std::cerr << "Cannot open cache file\n" ;
     return ;
   }
